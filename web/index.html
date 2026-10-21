@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#070b16" />
+    <title>Jarvis · God’s Eye View</title>
+    <script src="https://unpkg.com/globe.gl@2.37.0"></script>
+    <style>
+      :root { color-scheme: dark; --bg:#070b16; --panel:rgba(15,23,42,.82); --line:#263653; --muted:#91a1bd; --cyan:#67e8f9; --green:#86efac; --orange:#fdba74; }
+      * { box-sizing:border-box; }
+      body { margin:0; min-height:100vh; overflow:hidden; background:radial-gradient(circle at 50% 40%,#182b4a 0,#070b16 58%); color:#f8fafc; font:14px Inter,Segoe UI,system-ui,sans-serif; }
+      #globe { position:fixed; inset:0; }
+      .hud { position:fixed; inset:0; pointer-events:none; padding:20px; display:flex; flex-direction:column; justify-content:space-between; }
+      .topbar,.bottombar { display:flex; align-items:center; justify-content:space-between; gap:16px; pointer-events:auto; }
+      .brand,.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:0 14px 36px #0006; backdrop-filter:blur(14px); }
+      .brand { padding:12px 16px; }
+      .brand strong { display:block; letter-spacing:.12em; text-transform:uppercase; font-size:12px; color:var(--cyan); }
+      .brand span { display:block; margin-top:4px; color:var(--muted); font-size:12px; }
+      .status { color:var(--green); font-size:12px; }
+      .panel { padding:12px; }
+      .filters { display:flex; gap:8px; flex-wrap:wrap; }
+      button { border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:#dbeafe; background:#111c31; cursor:pointer; font:inherit; }
+      button:hover,button.active { border-color:var(--cyan); color:var(--cyan); background:#123047; }
+      .legend { display:flex; gap:14px; color:var(--muted); font-size:12px; }
+      .legend span::before { content:""; display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; background:var(--cyan); }
+      .legend .ship::before { background:var(--orange); }.legend .sat::before { background:#c4b5fd; }
+      @media (max-width:600px) { .hud { padding:12px; }.topbar,.bottombar { align-items:flex-start; flex-direction:column; }.bottombar { align-items:stretch; }.legend { justify-content:center; } }
+    </style>
+  </head>
+  <body>
+    <div id="globe" aria-label="Globo 3D com dados simulados de localização"></div>
+    <div class="hud">
+      <div class="topbar">
+        <div class="brand"><strong>JARVIS / GOD’S EYE</strong><span>Centro de inteligência geoespacial · modo demonstração</span></div>
+        <div class="panel status">● SISTEMA ONLINE · dados simulados</div>
+      </div>
+      <div class="bottombar">
+        <div class="panel filters" aria-label="Filtros de camadas">
+          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button>
+        </div>
+        <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span></div>
+      </div>
+    </div>
+    <script>
+      const assets = [
+        { id:'flight-1', type:'aircraft', label:'JJ 3812 · São Paulo', lat:-23.55, lng:-46.63, color:'#67e8f9', altitude:0.04 },
+        { id:'flight-2', type:'aircraft', label:'AD 4520 · Recife', lat:-8.05, lng:-34.9, color:'#67e8f9', altitude:0.04 },
+        { id:'ship-1', type:'ship', label:'Cargo Aurora · Santos', lat:-24.0, lng:-46.3, color:'#fdba74', altitude:0.02 },
+        { id:'sat-1', type:'satellite', label:'ISS · órbita baixa', lat:20, lng:30, color:'#c4b5fd', altitude:0.18 },
+        { id:'sat-2', type:'satellite', label:'Starlink · demonstração', lat:-20, lng:120, color:'#c4b5fd', altitude:0.16 },
+      ];
+      const globe = Globe()(document.getElementById('globe'))
+        .globeImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/earth-night.jpg')
+        .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
+        .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.45)
+        .pointLabel(d => `<b>${d.label}</b><br><small>${d.type} · fonte simulada</small>`)
+        .pointsData(assets);
+      globe.controls().autoRotate = true;
+      globe.controls().autoRotateSpeed = 0.25;
+      document.querySelectorAll('[data-layer]').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-layer]').forEach(item => item.classList.remove('active'));
+        button.classList.add('active');
+        const layer = button.dataset.layer;
+        globe.pointsData(layer === 'all' ? assets : assets.filter(asset => asset.type === layer));
+      }));
+    </script>
+  </body>
+</html>
