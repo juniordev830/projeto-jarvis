@@ -125,6 +125,9 @@ def position_history(limit: int = 100) -> list[dict[str, float]]:
 
 @app.websocket("/ws/positions")
 async def positions(websocket: WebSocket) -> None:
+    if settings.api_token and websocket.headers.get("authorization") != f"Bearer {settings.api_token}":
+        await websocket.close(code=1008, reason="Token de API inválido")
+        return
     await websocket.accept()
     try:
         while True:
