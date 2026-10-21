@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from dataclasses import asdict
@@ -18,6 +19,7 @@ if str(ROOT) not in sys.path:
 
 from python.gps_core import AutomationEngine, Geofence, Position, distance_meters  # noqa: E402
 from python.settings import Settings  # noqa: E402
+from backend.storage import GeofenceStore  # noqa: E402
 
 
 class GeofenceInput(BaseModel):
@@ -35,7 +37,10 @@ class PositionInput(BaseModel):
 
 app = FastAPI(title="Sentinel Atlas GPS API", version="0.1.0")
 settings = Settings.from_environment()
+store = GeofenceStore(os.getenv("SENTINEL_DB_PATH", str(ROOT / ".data" / "sentinel.sqlite3")))
 geofences: dict[str, tuple[Geofence, AutomationEngine]] = {}
+for saved_fence in store.list():
+    geofences[saved_fence.name] = (saved_fence, AutomationEngine(saved_fence))
 
 
 @app.get("/api/health")
@@ -51,6 +56,7 @@ def sources() -> dict[str, list[str]]:
 @app.post("/api/geofences", status_code=201)
 def create_geofence(payload: GeofenceInput) -> dict[str, object]:
     fence = Geofence(**payload.model_dump())
+    store.save(fence)
     geofences[fence.name] = (fence, AutomationEngine(fence))
     return asdict(fence)
 

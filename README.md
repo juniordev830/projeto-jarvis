@@ -12,6 +12,7 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - O arquivo `.env` local é carregado automaticamente ao iniciar Python; variáveis do sistema têm prioridade.
 - `backend/app.py`: API FastAPI com health check, fontes, geofences e WebSocket de posições.
 - `tests/test_gps.py`: testes do núcleo de distância e transição de geofence.
+- `backend/storage.py`: persistência SQLite local das geofences.
 - `Dockerfile` e `docker-compose.yml`: execução local reproduzível da API.
 - `.github/workflows/ci.yml`: validação automática de sintaxe e testes no GitHub Actions.
 - O projeto começa sem hardware: o modo simulado permite validar regras antes de conectar um dispositivo GPS real.
@@ -51,7 +52,7 @@ pip install -r backend/requirements.txt
 uvicorn backend.app:app --reload
 ```
 
-Ao iniciar a API, o painel fica disponível em `http://localhost:8000`. Endpoints principais: `GET /api/health`, `GET /api/sources`, `GET/POST /api/geofences` e `WS /ws/positions`.
+Ao iniciar a API, o painel fica disponível em `http://localhost:8000`. As geofences ficam persistidas em `.data/sentinel.sqlite3`. Endpoints principais: `GET /api/health`, `GET /api/sources`, `GET/POST /api/geofences` e `WS /ws/positions`.
 
 Para executar com Docker: `docker compose up --build`.
 Projeto Sentinel Atlas
