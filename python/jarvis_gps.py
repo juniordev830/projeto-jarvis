@@ -39,6 +39,25 @@ def distance_meters(first: Position, second: Geofence) -> float:
     return 2 * EARTH_RADIUS_METERS * math.asin(math.sqrt(a))
 
 
+def parse_nmea_rmc(sentence: str) -> Position:
+    """Converte uma sentença RMC válida em uma posição GPS."""
+    fields = sentence.strip().split(",")
+    if len(fields) < 7 or not fields[0].endswith("RMC") or fields[2] != "A":
+        raise ValueError("Sentença NMEA RMC inválida ou sem fix GPS ativo.")
+
+    def coordinate(raw: str, hemisphere: str, degrees: int) -> float:
+        if not raw or hemisphere not in {"N", "S", "E", "W"}:
+            raise ValueError("Coordenada NMEA ausente ou inválida.")
+        value = float(raw[:degrees]) + float(raw[degrees:]) / 60
+        return -value if hemisphere in {"S", "W"} else value
+
+    return Position(
+        latitude=coordinate(fields[3], fields[4], 2),
+        longitude=coordinate(fields[5], fields[6], 3),
+        timestamp=time.time(),
+    )
+
+
 class AutomationEngine:
     def __init__(self, geofence: Geofence) -> None:
         self.geofence = geofence
@@ -63,6 +82,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--center-lat", type=float, required=True, help="Latitude do centro da área")
     parser.add_argument("--center-lon", type=float, required=True, help="Longitude do centro da área")
     parser.add_argument("--radius", type=float, default=250, help="Raio da área em metros")
+    parser.add_argument("--nmea", help="Sentença NMEA GPRMC para converter em posição")
     return parser.parse_args()
 
 
@@ -76,6 +96,8 @@ def main() -> None:
             Position(args.center_lat, args.center_lon, time.time()),
             Position(args.center_lat + 0.01, args.center_lon + 0.01, time.time()),
         ]
+    elif args.nmea:
+        positions = [parse_nmea_rmc(args.nmea)]
     elif args.lat is not None and args.lon is not None:
         positions = [Position(args.lat, args.lon, time.time())]
     else:

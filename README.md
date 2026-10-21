@@ -20,5 +20,11 @@ Para testar um ponto específico em relação a uma área:
 python python/jarvis_gps.py --lat -23.5505 --lon -46.6333 --center-lat -23.5505 --center-lon -46.6333 --radius 250
 ```
 
+Também é possível converter uma sentença NMEA `GPRMC`:
+
+```bash
+python python/jarvis_gps.py --nmea '$GPRMC,123519,A,2331.000,S,04637.998,W,0.0,0.0,230326,,,A*00' --center-lat -23.5167 --center-lon -46.6333
+```
+
 O programa informa quando o dispositivo entra ou sai da área configurada. A posição recebida deve ser tratada como dado sensível: evite registrar coordenadas reais em logs públicos.
 Projeto de automação Jarvis
