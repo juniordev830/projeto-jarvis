@@ -6,71 +6,277 @@
     <meta name="theme-color" content="#070b16" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>Sentinel Atlas · God’s Eye View</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/globe.gl@2.37.0"></script>
     <style>
-      :root { color-scheme: dark; --bg:#070b16; --panel:rgba(15,23,42,.82); --line:#263653; --muted:#91a1bd; --cyan:#67e8f9; --green:#86efac; --orange:#fdba74; }
-      * { box-sizing:border-box; }
-      body { margin:0; min-height:100vh; overflow:hidden; background:radial-gradient(circle at 50% 40%,#182b4a 0,#070b16 58%); color:#f8fafc; font:14px Inter,Segoe UI,system-ui,sans-serif; }
-      #globe { position:fixed; inset:0; }
-      #map { position:fixed; inset:0; display:none; }
-      body.map-mode #globe { display:none; }
-      body.map-mode #map { display:block; }
-      .hud { position:fixed; inset:0; pointer-events:none; padding:20px; display:flex; flex-direction:column; justify-content:space-between; }
-      .topbar,.bottombar { display:flex; align-items:center; justify-content:space-between; gap:16px; pointer-events:auto; }
-      .brand,.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:0 14px 36px #0006; backdrop-filter:blur(14px); }
-      .brand { padding:12px 16px; }
-      .brand strong { display:block; letter-spacing:.12em; text-transform:uppercase; font-size:12px; color:var(--cyan); }
-      .brand span { display:block; margin-top:4px; color:var(--muted); font-size:12px; }
-      .status { color:var(--green); font-size:12px; }
-      .panel { padding:12px; }
-      .tools { display:flex; gap:8px; align-items:center; }
-      input { width:220px; border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:#dbeafe; background:#111c31; font:inherit; }
-      .inspector { position:fixed; right:20px; top:92px; max-width:280px; pointer-events:auto; }
-      .inspector[hidden] { display:none; }
-      .inspector strong { color:var(--cyan); }
-      .filters { display:flex; gap:8px; flex-wrap:wrap; }
-      button { border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:#dbeafe; background:#111c31; cursor:pointer; font:inherit; }
-      button:hover,button.active { border-color:var(--cyan); color:var(--cyan); background:#123047; }
-      .legend { display:flex; gap:14px; color:var(--muted); font-size:12px; }
-      .legend span::before { content:""; display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; background:var(--cyan); }
-      .legend .ship::before { background:var(--orange); }.legend .sat::before { background:#c4b5fd; }.legend .traffic::before { background:#f87171; }.legend .earthquake::before { background:#f472b6; }
-      @media (max-width:600px) { .hud { padding:12px; }.topbar,.bottombar { align-items:flex-start; flex-direction:column; }.bottombar { align-items:stretch; }.legend { justify-content:center; } }
+      :root {
+        color-scheme: dark;
+        --bg: #050811;
+        --panel: rgba(11, 18, 33, 0.85);
+        --panel-border: rgba(103, 232, 249, 0.18);
+        --panel-border-hover: rgba(103, 232, 249, 0.45);
+        --line: #1e293b;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --cyan: #38bdf8;
+        --cyan-glow: rgba(56, 189, 248, 0.35);
+        --green: #4ade80;
+        --green-glow: rgba(74, 222, 128, 0.35);
+        --orange: #fb923c;
+        --purple: #c084fc;
+        --red: #f87171;
+        --pink: #f472b6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 35%, #0f172a 0%, #050811 70%);
+        color: var(--text);
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+      }
+      #globe { position: fixed; inset: 0; }
+      #map { position: fixed; inset: 0; display: none; }
+      body.map-mode #globe { display: none; }
+      body.map-mode #map { display: block; }
+      .hud {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .topbar, .bottombar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        pointer-events: auto;
+      }
+      .brand, .panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+      }
+      .brand {
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 12px var(--cyan), 0 0 24px var(--cyan);
+        animation: pulse 2.5s infinite ease-in-out;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.85); }
+      }
+      .brand strong {
+        display: block;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 13px;
+        font-weight: 700;
+        color: #e0f2fe;
+      }
+      .brand span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .status {
+        color: var(--green);
+        font-size: 11px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .status::before {
+        content: '';
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+      }
+      .panel { padding: 10px 14px; }
+      .tools { display: flex; gap: 10px; align-items: center; }
+      input {
+        width: 240px;
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        padding: 8px 16px;
+        color: #f1f5f9;
+        background: rgba(15, 23, 42, 0.7);
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+      input:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 12px var(--cyan-glow);
+        background: rgba(15, 23, 42, 0.9);
+      }
+      .inspector {
+        position: fixed;
+        right: 24px;
+        top: 92px;
+        width: 300px;
+        pointer-events: auto;
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .inspector[hidden] { display: none; }
+      .inspector strong { color: var(--cyan); font-size: 14px; font-weight: 600; display: block; margin-bottom: 6px; }
+      .inspector small { color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.6; display: block; }
+      .filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+      button {
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        padding: 8px 14px;
+        color: #cbd5e1;
+        background: rgba(15, 23, 42, 0.6);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      button:hover {
+        border-color: var(--cyan);
+        color: var(--cyan);
+        background: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 0 12px var(--cyan-glow);
+      }
+      button.active {
+        border-color: var(--cyan);
+        color: #0284c7;
+        background: var(--cyan);
+        color: #030712;
+        font-weight: 600;
+        box-shadow: 0 0 16px var(--cyan-glow);
+      }
+      .badge {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      button.active .badge {
+        background: rgba(0, 0, 0, 0.2);
+        color: #030712;
+      }
+      .legend { display: flex; gap: 16px; color: var(--muted); font-size: 11px; font-weight: 500; }
+      .legend span { display: inline-flex; align-items: center; }
+      .legend span::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 6px var(--cyan-glow);
+      }
+      .legend .ship::before { background: var(--orange); box-shadow: 0 0 6px rgba(251, 146, 60, 0.4); }
+      .legend .sat::before { background: var(--purple); box-shadow: 0 0 6px rgba(192, 132, 252, 0.4); }
+      .legend .traffic::before { background: var(--red); box-shadow: 0 0 6px rgba(248, 113, 113, 0.4); }
+      .legend .earthquake::before { background: var(--pink); box-shadow: 0 0 6px rgba(244, 114, 182, 0.4); }
+
+      @media (max-width: 768px) {
+        .hud { padding: 12px; }
+        .topbar, .bottombar { align-items: stretch; flex-direction: column; gap: 10px; }
+        .inspector { position: static; width: 100%; margin-top: 8px; }
+        .legend { justify-content: center; flex-wrap: wrap; }
+      }
     </style>
   </head>
   <body>
     <div id="globe" aria-label="Globo 3D com dados simulados de localização"></div>
     <div class="hud">
       <div class="topbar">
-        <div class="brand"><strong>Sentinel Atlas</strong><span>Centro de inteligência geoespacial · modo demonstração</span></div>
-        <div class="tools"><input id="asset-search" type="search" placeholder="Buscar ativo ou cidade" aria-label="Buscar ativo ou cidade" /><div id="api-status" class="panel status">● DEMONSTRAÇÃO · dados simulados</div></div>
+        <div class="brand">
+          <div class="brand-icon"></div>
+          <div>
+            <strong>Sentinel Atlas</strong>
+            <span>GeoInt & Geofencing Platform · v0.1</span>
+          </div>
+        </div>
+        <div class="tools">
+          <input id="asset-search" type="search" placeholder="🔍 Buscar ativo ou cidade..." aria-label="Buscar ativo ou cidade" />
+          <div id="api-status" class="panel status">DEMONSTRAÇÃO · dados simulados</div>
+        </div>
       </div>
       <div id="inspector" class="panel inspector" hidden></div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="my-location">Minha localização</button><button id="replay-history">Reproduzir histórico</button><button id="texture-toggle">Luz do dia</button><button id="map-view">Mapa satélite</button>
+          <button class="active" data-layer="all">Tudo <span id="cnt-all" class="badge">7</span></button>
+          <button data-layer="aircraft">Aviões <span id="cnt-aircraft" class="badge">2</span></button>
+          <button data-layer="ship">Navios <span id="cnt-ship" class="badge">1</span></button>
+          <button data-layer="satellite">Satélites <span id="cnt-satellite" class="badge">2</span></button>
+          <button data-layer="traffic">Trânsito <span id="cnt-traffic" class="badge">2</span></button>
+          <button data-layer="earthquake">Terremotos <span id="cnt-earthquake" class="badge">0</span></button>
+          <button id="my-location">📍 Minha localização</button>
+          <button id="replay-history">⏱️ Histórico</button>
+          <button id="texture-toggle">☀️ Luz do dia</button>
+          <button id="map-view">🛰️ Mapa satélite</button>
         </div>
-        <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span><span class="earthquake">Terremotos</span></div>
+        <div class="panel legend">
+          <span>Aviões</span>
+          <span class="ship">Navios</span>
+          <span class="sat">Satélites</span>
+          <span class="traffic">Trânsito</span>
+          <span class="earthquake">Terremotos</span>
+        </div>
       </div>
     </div>
     <div id="map" aria-label="Mapa Google com imagens de satélite e trânsito"></div>
     <script>
       const assets = [
-        { id:'flight-1', type:'aircraft', label:'JJ 3812 · São Paulo', lat:-23.55, lng:-46.63, color:'#67e8f9', altitude:0.04 },
-        { id:'flight-2', type:'aircraft', label:'AD 4520 · Recife', lat:-8.05, lng:-34.9, color:'#67e8f9', altitude:0.04 },
-        { id:'ship-1', type:'ship', label:'Cargo Aurora · Santos', lat:-24.0, lng:-46.3, color:'#fdba74', altitude:0.02 },
-        { id:'sat-1', type:'satellite', label:'ISS · órbita baixa', lat:20, lng:30, color:'#c4b5fd', altitude:0.18 },
-        { id:'sat-2', type:'satellite', label:'Starlink · demonstração', lat:-20, lng:120, color:'#c4b5fd', altitude:0.16 },
+        { id:'flight-1', type:'aircraft', label:'JJ 3812 · São Paulo', lat:-23.55, lng:-46.63, color:'#38bdf8', altitude:0.04 },
+        { id:'flight-2', type:'aircraft', label:'AD 4520 · Recife', lat:-8.05, lng:-34.9, color:'#38bdf8', altitude:0.04 },
+        { id:'ship-1', type:'ship', label:'Cargo Aurora · Santos', lat:-24.0, lng:-46.3, color:'#fb923c', altitude:0.02 },
+        { id:'sat-1', type:'satellite', label:'ISS · órbita baixa', lat:20, lng:30, color:'#c084fc', altitude:0.18 },
+        { id:'sat-2', type:'satellite', label:'Starlink · demonstração', lat:-20, lng:120, color:'#c084fc', altitude:0.16 },
         { id:'traffic-1', type:'traffic', label:'Congestionamento · Av. Paulista', lat:-23.561, lng:-46.656, color:'#f87171', altitude:0.01 },
         { id:'traffic-2', type:'traffic', label:'Incidente · Marginal Pinheiros', lat:-23.59, lng:-46.7, color:'#facc15', altitude:0.01 },
       ];
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
       const routes = [
         { startLat:-23.55, startLng:-46.63, endLat:-23.59, endLng:-46.7, color:'#f87171', label:'Rota com congestionamento' },
-        { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#86efac', label:'Rota alternativa' },
+        { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#4ade80', label:'Rota alternativa' },
       ];
       const satelliteOrbits = [
-        { startLat: 20, startLng: -160, endLat: 20, endLng: 30, color: '#c4b5fd', label: 'Órbita ISS' },
-        { startLat: -20, startLng: -60, endLat: -20, endLng: 120, color: '#a78bfa', label: 'Órbita Starlink' },
+        { startLat: 20, startLng: -160, endLat: 20, endLng: 30, color: '#c084fc', label: 'Órbita ISS' },
+        { startLat: -20, startLng: -60, endLat: -20, endLng: 120, color: '#a855f7', label: 'Órbita Starlink' },
       ];
       const eventRings = [
         { lat: -23.561, lng: -46.656, color: '#f87171' },
@@ -85,30 +291,46 @@
       let currentTexture = 'night';
       let replayTimer;
       let positionSocket;
+
+      function updateBadges() {
+        const counts = { all: assets.length, aircraft: 0, ship: 0, satellite: 0, traffic: 0, earthquake: 0 };
+        assets.forEach(a => { if (counts[a.type] !== undefined) counts[a.type]++; });
+        Object.keys(counts).forEach(key => {
+          const el = document.getElementById(`cnt-${key}`);
+          if (el) el.textContent = counts[key];
+        });
+      }
+
       function replaceAssets(type, incoming) {
         for (let index = assets.length - 1; index >= 0; index -= 1) {
           if (assets[index].type === type) assets.splice(index, 1);
         }
         assets.push(...incoming);
-        globe.pointsData(assets);
+        const activeFilter = document.querySelector('[data-layer].active')?.dataset.layer || 'all';
+        globe.pointsData(activeFilter === 'all' ? assets : assets.filter(a => a.type === activeFilter));
+        updateBadges();
       }
+
       const globe = Globe()(document.getElementById('globe'))
         .globeImageUrl(textures[currentTexture])
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
-        .showAtmosphere(true).atmosphereColor('#67e8f9').atmosphereAltitude(0.18)
-        .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.45)
-        .pointLabel(d => `<b>${d.label}</b><br><small>${d.type === 'earthquake' ? 'USGS · fonte pública' : d.type + ' · demonstração'}</small>`)
+        .showAtmosphere(true).atmosphereColor('#38bdf8').atmosphereAltitude(0.2)
+        .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.5)
+        .pointLabel(d => `<div style="background:rgba(15,23,42,0.9);padding:6px 10px;border-radius:8px;border:1px solid rgba(56,189,248,0.3);font-family:sans-serif;font-size:12px;"><b>${d.label}</b><br><span style="color:#94a3b8;font-size:10px;">${d.type === 'earthquake' ? 'USGS · Fonte Pública' : d.type.toUpperCase() + ' · Ativo'}</span></div>`)
         .onPointClick(asset => {
           const inspector = document.getElementById('inspector');
-          inspector.innerHTML = `<strong>${asset.label}</strong><br><small>Tipo: ${asset.type}<br>Latitude: ${asset.lat.toFixed(4)}<br>Longitude: ${asset.lng.toFixed(4)}<br>Fonte: ${asset.type === 'earthquake' ? 'USGS' : 'demonstração'}</small>`;
+          inspector.innerHTML = `<strong>${asset.label}</strong><small>TIPO: ${asset.type.toUpperCase()}<br>LAT: ${asset.lat.toFixed(4)}<br>LNG: ${asset.lng.toFixed(4)}<br>FONTE: ${asset.type === 'earthquake' ? 'USGS' : 'Demonstração'}</small>`;
           inspector.hidden = false;
         })
         .arcsData([...routes, ...satelliteOrbits]).arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng').arcColor('color').arcDashLength(0.45).arcDashGap(0.18).arcDashAnimateTime(1800)
         .ringsData(eventRings).ringLat('lat').ringLng('lng').ringColor('color').ringMaxRadius(3).ringPropagationSpeed(1.8).ringRepeatPeriod(1400)
         .pointsData(assets);
+
       globe.controls().autoRotate = true;
       globe.controls().autoRotateSpeed = 0.25;
       globe.controls().enableDamping = true;
+      updateBadges();
+
       document.querySelectorAll('[data-layer]').forEach(button => button.addEventListener('click', () => {
         document.querySelectorAll('[data-layer]').forEach(item => item.classList.remove('active'));
         button.classList.add('active');
@@ -152,7 +374,7 @@
       document.getElementById('texture-toggle').addEventListener('click', event => {
         currentTexture = currentTexture === 'night' ? 'day' : 'night';
         globe.globeImageUrl(textures[currentTexture]);
-        event.currentTarget.textContent = currentTexture === 'night' ? 'Luz do dia' : 'Luz noturna';
+        event.currentTarget.innerHTML = currentTexture === 'night' ? '☀️ Luz do dia' : '🌙 Luz noturna';
       });
 
       async function replayHistory() {
@@ -166,16 +388,16 @@
           let index = 0;
           const showNext = () => {
             const point = points[index];
-            replaceAssets('history', [{ ...point, id: 'history-replay', type: 'history', lat: point.latitude, lng: point.longitude, color: '#86efac', altitude: 0.03, label: `Histórico GPS · ${new Date(point.timestamp * 1000).toLocaleString()}` }]);
+            replaceAssets('history', [{ ...point, id: 'history-replay', type: 'history', lat: point.latitude, lng: point.longitude, color: '#4ade80', altitude: 0.035, label: `Histórico GPS · ${new Date(point.timestamp * 1000).toLocaleString()}` }]);
             globe.pointOfView({ lat: point.latitude, lng: point.longitude, altitude: 1.5 }, 450);
             index += 1;
             if (index >= points.length) clearInterval(replayTimer);
           };
           showNext();
           replayTimer = setInterval(showNext, 900);
-          status.textContent = `● REPRODUZINDO HISTÓRICO · ${points.length} posições`;
+          status.textContent = `REPRODUZINDO HISTÓRICO · ${points.length} posições`;
         } catch (error) {
-          status.textContent = `● HISTÓRICO INDISPONÍVEL · ${error.message}`;
+          status.textContent = `HISTÓRICO INDISPONÍVEL · ${error.message}`;
         }
       }
       document.getElementById('replay-history').addEventListener('click', replayHistory);
@@ -193,19 +415,19 @@
       function startDeviceLocation() {
         const status = document.getElementById('api-status');
         if (!navigator.geolocation) {
-          status.textContent = '● LOCALIZAÇÃO INDISPONÍVEL NESTE DISPOSITIVO';
+          status.textContent = 'LOCALIZAÇÃO INDISPONÍVEL NESTE DISPOSITIVO';
           return;
         }
-        status.textContent = '● SOLICITANDO PERMISSÃO DE LOCALIZAÇÃO';
+        status.textContent = 'SOLICITANDO PERMISSÃO DE LOCALIZAÇÃO';
         navigator.geolocation.watchPosition(position => {
           const { latitude, longitude, accuracy } = position.coords;
           const payload = { latitude, longitude, timestamp: Date.now() / 1000 };
-          replaceAssets('device', [{ id: 'connected-device', type: 'device', lat: latitude, lng: longitude, color: '#86efac', altitude: 0.035, label: `Dispositivo conectado · precisão ${Math.round(accuracy)}m` }]);
+          replaceAssets('device', [{ id: 'connected-device', type: 'device', lat: latitude, lng: longitude, color: '#4ade80', altitude: 0.035, label: `Dispositivo conectado · precisão ${Math.round(accuracy)}m` }]);
           globe.pointOfView({ lat: latitude, lng: longitude, altitude: 1.35 }, 800);
           sendDevicePosition(payload);
-          status.textContent = `● LOCALIZAÇÃO ATIVA · precisão ${Math.round(accuracy)}m`;
+          status.textContent = `LOCALIZAÇÃO ATIVA · precisão ${Math.round(accuracy)}m`;
         }, error => {
-          status.textContent = `● LOCALIZAÇÃO NÃO ATIVADA · ${error.message}`;
+          status.textContent = `LOCALIZAÇÃO NÃO ATIVADA · ${error.message}`;
         }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
       }
       document.getElementById('my-location').addEventListener('click', startDeviceLocation);
@@ -223,9 +445,9 @@
           const response = await fetch('/api/health', { headers: { Accept: 'application/json' } });
           if (!response.ok) throw new Error('API indisponível');
           const data = await response.json();
-          status.textContent = `● API ONLINE · ${new Date(data.timestamp * 1000).toLocaleTimeString()}`;
+          status.textContent = `API ONLINE · ${new Date(data.timestamp * 1000).toLocaleTimeString()}`;
         } catch {
-          status.textContent = '● DEMONSTRAÇÃO · API não conectada';
+          status.textContent = 'DEMONSTRAÇÃO · API não conectada';
         }
       }
       refreshApiStatus();
@@ -251,14 +473,12 @@
           });
           new google.maps.TrafficLayer().setMap(googleMap);
           document.body.classList.add('map-mode');
-          status.textContent = '● GOOGLE MAPS · satélite + trânsito';
+          status.textContent = 'GOOGLE MAPS · satélite + trânsito';
         } catch (error) {
-          status.textContent = `● MAPA 2D INDISPONÍVEL · ${error.message}`;
+          status.textContent = `MAPA 2D INDISPONÍVEL · ${error.message}`;
         }
       }
       document.getElementById('map-view').addEventListener('click', openSatelliteMap);
     </script>
   </body>
 </html>
-
-
