@@ -125,6 +125,21 @@
       }
       loadEarthquakes();
 
+      async function loadStarlink() {
+        try {
+          const response = await fetch('/api/sources/starlink');
+          if (!response.ok) throw new Error('Starlink indisponível');
+          const payload = await response.json();
+          if (payload.items?.length) {
+            assets.push(...payload.items);
+            globe.pointsData(assets);
+          }
+        } catch (error) {
+          console.info('Camada Starlink indisponível:', error.message);
+        }
+      }
+      loadStarlink();
+
       document.getElementById('texture-toggle').addEventListener('click', event => {
         currentTexture = currentTexture === 'night' ? 'day' : 'night';
         globe.globeImageUrl(textures[currentTexture]);

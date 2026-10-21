@@ -15,6 +15,7 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - `GET /api/routes/bicycle` consulta rotas de bicicleta do OSRM/OpenStreetMap.
 - `backend/app.py`: API FastAPI com health check, fontes, geofences e WebSocket de posições.
 - O botão `Mapa satélite` usa Google Maps Satellite e Traffic Layer quando `GOOGLE_MAPS_API_KEY` estiver configurada com restrições de domínio.
+- `/api/sources/starlink` busca elementos orbitais do CelesTrak e calcula posições com SGP4 quando a dependência estiver instalada.
 - `tests/test_gps.py`: testes do núcleo de distância e transição de geofence.
 - `backend/storage.py`: persistência SQLite local das geofences.
 - `Dockerfile` e `docker-compose.yml`: execução local reproduzível da API.

@@ -24,6 +24,7 @@ from backend.storage import GeofenceStore  # noqa: E402
 from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_opensky  # noqa: E402
 from backend.alerts import send_webhook  # noqa: E402
 from backend.routing import bicycle_route  # noqa: E402
+from backend.orbits import propagate_tle  # noqa: E402
 
 
 class GeofenceInput(BaseModel):
@@ -85,6 +86,22 @@ def satellites() -> dict[str, object]:
         return {"source": "CelesTrak", "count": len(satellites), "items": satellites[:100]}
     except SourceUnavailable as error:
         return {"source": "CelesTrak", "count": 0, "items": [], "error": str(error)}
+
+
+@app.get("/api/sources/starlink")
+def starlink() -> dict[str, object]:
+    try:
+        records = fetch_celestrak(settings.celestrak_starlink_url)
+        items = []
+        for record in records[:200]:
+            if record.get("TLE_LINE1") and record.get("TLE_LINE2"):
+                try:
+                    items.append(propagate_tle(str(record.get("OBJECT_NAME", "Starlink")), str(record["TLE_LINE1"]), str(record["TLE_LINE2"])))
+                except RuntimeError:
+                    continue
+        return {"source": "CelesTrak + SGP4", "count": len(items), "items": items}
+    except (SourceUnavailable, RuntimeError) as error:
+        return {"source": "CelesTrak + SGP4", "count": 0, "items": [], "error": str(error)}
 
 
 @app.get("/api/sources/aircraft")

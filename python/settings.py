@@ -37,6 +37,7 @@ class Settings:
     nasa_gibs_base_url: str
     usgs_earthquake_feed: str
     celestrak_gp_url: str
+    celestrak_starlink_url: str
     alert_webhook_url: str | None
     api_token: str | None
 
@@ -53,6 +54,7 @@ class Settings:
             nasa_gibs_base_url=os.getenv("NASA_GIBS_BASE_URL", "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best"),
             usgs_earthquake_feed=os.getenv("USGS_EARTHQUAKE_FEED", "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"),
             celestrak_gp_url=os.getenv("CELESTRAK_GP_URL", "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json"),
+            celestrak_starlink_url=os.getenv("CELESTRAK_STARLINK_URL", "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json"),
             alert_webhook_url=_optional_env("SENTINEL_ALERT_WEBHOOK_URL"),
             api_token=_optional_env("SENTINEL_API_TOKEN"),
         )
