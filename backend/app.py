@@ -26,6 +26,7 @@ from backend.alerts import send_webhook  # noqa: E402
 from backend.routing import bicycle_route  # noqa: E402
 from backend.orbits import propagate_tle  # noqa: E402
 from backend.ai import GeoINTAnalyzer  # noqa: E402
+from backend.location import get_location_info  # noqa: E402
 
 
 class AIAnalyzeInput(BaseModel):
@@ -162,6 +163,13 @@ def delete_geofence(name: str) -> dict[str, object]:
 @app.get("/api/positions/history")
 def position_history(limit: int = 100) -> list[dict[str, float]]:
     return [asdict(position) for position in store.list_positions(limit)]
+
+
+@app.get("/api/location/info")
+def location_info(lat: float, lng: float) -> dict[str, Any]:
+    if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        raise HTTPException(status_code=400, detail="Coordenadas geográficas inválidas")
+    return get_location_info(lat, lng)
 
 
 @app.post("/api/ai/analyze")

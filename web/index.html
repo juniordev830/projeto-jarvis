@@ -503,6 +503,41 @@
           inspector.innerHTML = `<strong>${asset.label}</strong><small>TIPO: ${asset.type.toUpperCase()}<br>LAT: ${asset.lat.toFixed(4)}<br>LNG: ${asset.lng.toFixed(4)}<br>FONTE: ${asset.type === 'earthquake' ? 'USGS' : 'Demonstração'}</small>`;
           inspector.hidden = false;
         })
+        .onGlobeClick(async ({ lat, lng }) => {
+          const inspector = document.getElementById('inspector');
+          inspector.hidden = false;
+          inspector.innerHTML = `<strong>🌐 Pesquisando Região...</strong><small>LAT: ${lat.toFixed(4)}° | LNG: ${lng.toFixed(4)}°<br>Consultando inteligência demográfica e empresarial...</small>`;
+          try {
+            const res = await fetch(`/api/location/info?lat=${lat}&lng=${lng}`);
+            if (!res.ok) throw new Error('Erro na consulta de localização');
+            const data = await res.json();
+
+            let companiesList = '';
+            if (data.business && data.business.sample_companies && data.business.sample_companies.length > 0) {
+              companiesList = data.business.sample_companies.map(c => `• ${c.name} (${c.category})`).join('<br>');
+            } else {
+              companiesList = 'Nenhuma grande empresa ou POI registrado neste raio.';
+            }
+
+            inspector.innerHTML = `
+              <strong>📍 ${data.city !== 'N/A' ? data.city : data.country}</strong>
+              <small style="color:var(--cyan);font-weight:600;">${data.display_name}</small>
+              <hr style="border:0;border-top:1px solid var(--panel-border);margin:8px 0;">
+              <small>
+                <b>🌍 PAÍS:</b> ${data.country}<br>
+                <b>🏛️ ESTADO / REGIÃO:</b> ${data.state}<br>
+                <b>🏙️ CIDADE / VILA:</b> ${data.city}<br>
+                <b>👥 HABITANTES ESTIMADOS:</b> <span style="color:var(--green);font-weight:700;">${data.demographics.estimated_population > 0 ? data.demographics.estimated_population.toLocaleString('pt-BR') + ' pessoas' : 'Área remota / Oceano'}</span><br>
+                <b>📊 DENSIDADE:</b> ${data.demographics.density_description}<br>
+                <br>
+                <b>🏢 EMPRESAS & COMÉRCIO PRÓXIMO:</b> (${data.business.nearby_count} detectados)<br>
+                <span style="color:#cbd5e1;">${companiesList}</span>
+              </small>
+            `;
+          } catch (err) {
+            inspector.innerHTML = `<strong>📍 Localização Selecionada</strong><small>LAT: ${lat.toFixed(4)}° | LNG: ${lng.toFixed(4)}°<br><span style="color:var(--red);">Erro ao obter dados detalhados da região.</span></small>`;
+          }
+        })
         .arcsData(pathTrails)
         .arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng')
         .arcColor('color').arcDashLength(0.4).arcDashGap(0.15).arcDashAnimateTime(2000).arcStroke(1.2)
