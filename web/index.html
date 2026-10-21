@@ -48,7 +48,7 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        padding: 24px;
+        padding: 20px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -122,7 +122,7 @@
       .panel { padding: 10px 14px; }
       .tools { display: flex; gap: 10px; align-items: center; }
       input {
-        width: 240px;
+        width: 220px;
         border: 1px solid var(--panel-border);
         border-radius: 999px;
         padding: 8px 16px;
@@ -140,9 +140,9 @@
       }
       .inspector {
         position: fixed;
-        right: 24px;
-        top: 92px;
-        width: 300px;
+        right: 20px;
+        top: 86px;
+        width: 310px;
         pointer-events: auto;
         animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
@@ -153,6 +153,34 @@
       .inspector[hidden] { display: none; }
       .inspector strong { color: var(--cyan); font-size: 14px; font-weight: 600; display: block; margin-bottom: 6px; }
       .inspector small { color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.6; display: block; }
+
+      /* Compass & Coordinates HUD Overlay */
+      .compass-hud {
+        position: fixed;
+        left: 20px;
+        top: 86px;
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--cyan);
+      }
+      .compass-ring {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1px dashed var(--cyan);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        box-shadow: 0 0 12px var(--cyan-glow);
+        background: rgba(15, 23, 42, 0.7);
+        transition: transform 0.2s ease-out;
+      }
+
       .filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
       button {
         border: 1px solid var(--panel-border);
@@ -177,9 +205,8 @@
       }
       button.active {
         border-color: var(--cyan);
-        color: #0284c7;
-        background: var(--cyan);
         color: #030712;
+        background: var(--cyan);
         font-weight: 600;
         box-shadow: 0 0 16px var(--cyan-glow);
       }
@@ -210,10 +237,12 @@
       .legend .sat::before { background: var(--purple); box-shadow: 0 0 6px rgba(192, 132, 252, 0.4); }
       .legend .traffic::before { background: var(--red); box-shadow: 0 0 6px rgba(248, 113, 113, 0.4); }
       .legend .earthquake::before { background: var(--pink); box-shadow: 0 0 6px rgba(244, 114, 182, 0.4); }
+      .legend .geofence::before { background: var(--green); box-shadow: 0 0 6px rgba(74, 222, 128, 0.4); }
 
       @media (max-width: 768px) {
         .hud { padding: 12px; }
         .topbar, .bottombar { align-items: stretch; flex-direction: column; gap: 10px; }
+        .compass-hud { position: static; margin-bottom: 6px; }
         .inspector { position: static; width: 100%; margin-top: 8px; }
         .legend { justify-content: center; flex-wrap: wrap; }
       }
@@ -227,7 +256,7 @@
           <div class="brand-icon"></div>
           <div>
             <strong>Sentinel Atlas</strong>
-            <span>GeoInt & Geofencing Platform · v0.1</span>
+            <span>GeoInt & Geofencing Platform · v0.2</span>
           </div>
         </div>
         <div class="tools">
@@ -235,15 +264,26 @@
           <div id="api-status" class="panel status">DEMONSTRAÇÃO · dados simulados</div>
         </div>
       </div>
+
+      <div class="compass-hud panel">
+        <div id="compass-dir" class="compass-ring">N</div>
+        <div>
+          <div id="hud-time" style="font-size:12px;font-weight:600;color:#f8fafc;">00:00:00 UTC</div>
+          <div id="hud-coords" style="font-size:10px;color:#94a3b8;">LAT --° LNG --°</div>
+        </div>
+      </div>
+
       <div id="inspector" class="panel inspector" hidden></div>
+
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo <span id="cnt-all" class="badge">7</span></button>
-          <button data-layer="aircraft">Aviões <span id="cnt-aircraft" class="badge">2</span></button>
-          <button data-layer="ship">Navios <span id="cnt-ship" class="badge">1</span></button>
-          <button data-layer="satellite">Satélites <span id="cnt-satellite" class="badge">2</span></button>
-          <button data-layer="traffic">Trânsito <span id="cnt-traffic" class="badge">2</span></button>
+          <button class="active" data-layer="all">Tudo <span id="cnt-all" class="badge">0</span></button>
+          <button data-layer="aircraft">Aviões <span id="cnt-aircraft" class="badge">0</span></button>
+          <button data-layer="ship">Navios <span id="cnt-ship" class="badge">0</span></button>
+          <button data-layer="satellite">Satélites <span id="cnt-satellite" class="badge">0</span></button>
+          <button data-layer="traffic">Trânsito <span id="cnt-traffic" class="badge">0</span></button>
           <button data-layer="earthquake">Terremotos <span id="cnt-earthquake" class="badge">0</span></button>
+          <button data-layer="geofence">Geofences <span id="cnt-geofence" class="badge">0</span></button>
           <button id="my-location">📍 Minha localização</button>
           <button id="replay-history">⏱️ Histórico</button>
           <button id="texture-toggle">☀️ Luz do dia</button>
@@ -255,6 +295,7 @@
           <span class="sat">Satélites</span>
           <span class="traffic">Trânsito</span>
           <span class="earthquake">Terremotos</span>
+          <span class="geofence">Geofences 3D</span>
         </div>
       </div>
     </div>
@@ -269,19 +310,52 @@
         { id:'traffic-1', type:'traffic', label:'Congestionamento · Av. Paulista', lat:-23.561, lng:-46.656, color:'#f87171', altitude:0.01 },
         { id:'traffic-2', type:'traffic', label:'Incidente · Marginal Pinheiros', lat:-23.59, lng:-46.7, color:'#facc15', altitude:0.01 },
       ];
+
+      // Geofences simuladas + dinâmicas do backend
+      let loadedGeofences = [
+        { name: 'Base Principal - SP', latitude: -23.5505, longitude: -46.6333, radius_meters: 1500 },
+        { name: 'Porto de Santos', latitude: -23.9608, longitude: -46.3339, radius_meters: 3000 }
+      ];
+
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
-      const routes = [
-        { startLat:-23.55, startLng:-46.63, endLat:-23.59, endLng:-46.7, color:'#f87171', label:'Rota com congestionamento' },
-        { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#4ade80', label:'Rota alternativa' },
+
+      // Trilhas de trajetórias táticas
+      const pathTrails = [
+        {
+          startLat: -23.55, startLng: -46.63, endLat: -8.05, endLng: -34.9,
+          color: ['#38bdf8', '#818cf8'], label: 'Trilha Tática Avião JJ 3812'
+        },
+        {
+          startLat: 20, startLng: -160, endLat: 20, endLng: 30,
+          color: ['#c084fc', '#e879f9'], label: 'Órbita ISS'
+        },
+        {
+          startLat: -20, startLng: -60, endLat: -20, endLng: 120,
+          color: ['#a855f7', '#38bdf8'], label: 'Órbita Starlink'
+        }
       ];
-      const satelliteOrbits = [
-        { startLat: 20, startLng: -160, endLat: 20, endLng: 30, color: '#c084fc', label: 'Órbita ISS' },
-        { startLat: -20, startLng: -60, endLat: -20, endLng: 120, color: '#a855f7', label: 'Órbita Starlink' },
-      ];
-      const eventRings = [
-        { lat: -23.561, lng: -46.656, color: '#f87171' },
-        { lat: -23.59, lng: -46.7, color: '#facc15' },
-      ];
+
+      function buildRingsData() {
+        const rings = [
+          { lat: -23.561, lng: -46.656, color: '#f87171', maxRadius: 3, propagationSpeed: 1.8, repeatPeriod: 1400 },
+          { lat: -23.59, lng: -46.7, color: '#facc15', maxRadius: 2.5, propagationSpeed: 1.5, repeatPeriod: 1600 }
+        ];
+        // Adiciona geofences 3D como anéis pulsantes
+        loadedGeofences.forEach(fence => {
+          rings.push({
+            lat: fence.latitude,
+            lng: fence.longitude,
+            color: '#4ade80',
+            maxRadius: Math.max(1, fence.radius_meters / 500),
+            propagationSpeed: 1.2,
+            repeatPeriod: 1800,
+            isGeofence: true,
+            label: `Geofence: ${fence.name} (${fence.radius_meters}m)`
+          });
+        });
+        return rings;
+      }
+
       const earthquakeSource = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson';
       let googleMap;
       const textures = {
@@ -293,7 +367,7 @@
       let positionSocket;
 
       function updateBadges() {
-        const counts = { all: assets.length, aircraft: 0, ship: 0, satellite: 0, traffic: 0, earthquake: 0 };
+        const counts = { all: assets.length + loadedGeofences.length, aircraft: 0, ship: 0, satellite: 0, traffic: 0, earthquake: 0, geofence: loadedGeofences.length };
         assets.forEach(a => { if (counts[a.type] !== undefined) counts[a.type]++; });
         Object.keys(counts).forEach(key => {
           const el = document.getElementById(`cnt-${key}`);
@@ -307,8 +381,36 @@
         }
         assets.push(...incoming);
         const activeFilter = document.querySelector('[data-layer].active')?.dataset.layer || 'all';
-        globe.pointsData(activeFilter === 'all' ? assets : assets.filter(a => a.type === activeFilter));
+        globe.pointsData(getFilteredPoints(activeFilter));
         updateBadges();
+      }
+
+      function getFilteredPoints(layer) {
+        let points = [...assets];
+        if (layer === 'geofence') {
+          return loadedGeofences.map(f => ({
+            id: `gf-${f.name}`,
+            type: 'geofence',
+            lat: f.latitude,
+            lng: f.longitude,
+            color: '#4ade80',
+            altitude: 0.02,
+            label: `Geofence: ${f.name} · ${f.radius_meters}m`
+          }));
+        }
+        if (layer === 'all') {
+          const gfPoints = loadedGeofences.map(f => ({
+            id: `gf-${f.name}`,
+            type: 'geofence',
+            lat: f.latitude,
+            lng: f.longitude,
+            color: '#4ade80',
+            altitude: 0.02,
+            label: `Geofence: ${f.name} · ${f.radius_meters}m`
+          }));
+          return [...points, ...gfPoints];
+        }
+        return points.filter(a => a.type === layer);
       }
 
       const globe = Globe()(document.getElementById('globe'))
@@ -316,27 +418,57 @@
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
         .showAtmosphere(true).atmosphereColor('#38bdf8').atmosphereAltitude(0.2)
         .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.5)
-        .pointLabel(d => `<div style="background:rgba(15,23,42,0.9);padding:6px 10px;border-radius:8px;border:1px solid rgba(56,189,248,0.3);font-family:sans-serif;font-size:12px;"><b>${d.label}</b><br><span style="color:#94a3b8;font-size:10px;">${d.type === 'earthquake' ? 'USGS · Fonte Pública' : d.type.toUpperCase() + ' · Ativo'}</span></div>`)
+        .pointLabel(d => `<div style="background:rgba(15,23,42,0.92);padding:6px 10px;border-radius:8px;border:1px solid rgba(56,189,248,0.35);font-family:sans-serif;font-size:12px;box-shadow:0 8px 16px rgba(0,0,0,0.5);"><b>${d.label}</b><br><span style="color:#94a3b8;font-size:10px;">${d.type === 'earthquake' ? 'USGS · Fonte Pública' : d.type.toUpperCase() + ' · Ativo Tático'}</span></div>`)
         .onPointClick(asset => {
           const inspector = document.getElementById('inspector');
           inspector.innerHTML = `<strong>${asset.label}</strong><small>TIPO: ${asset.type.toUpperCase()}<br>LAT: ${asset.lat.toFixed(4)}<br>LNG: ${asset.lng.toFixed(4)}<br>FONTE: ${asset.type === 'earthquake' ? 'USGS' : 'Demonstração'}</small>`;
           inspector.hidden = false;
         })
-        .arcsData([...routes, ...satelliteOrbits]).arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng').arcColor('color').arcDashLength(0.45).arcDashGap(0.18).arcDashAnimateTime(1800)
-        .ringsData(eventRings).ringLat('lat').ringLng('lng').ringColor('color').ringMaxRadius(3).ringPropagationSpeed(1.8).ringRepeatPeriod(1400)
-        .pointsData(assets);
+        .arcsData(pathTrails)
+        .arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng')
+        .arcColor('color').arcDashLength(0.4).arcDashGap(0.15).arcDashAnimateTime(2000).arcStroke(1.2)
+        .ringsData(buildRingsData())
+        .ringLat('lat').ringLng('lng').ringColor('color').ringMaxRadius('maxRadius')
+        .ringPropagationSpeed('propagationSpeed').ringRepeatPeriod('repeatPeriod')
+        .pointsData(getFilteredPoints('all'));
 
       globe.controls().autoRotate = true;
       globe.controls().autoRotateSpeed = 0.25;
       globe.controls().enableDamping = true;
-      updateBadges();
+
+      // Atualiza bússola e coordenadas HUD no movimento da câmera
+      function updateHUD() {
+        document.getElementById('hud-time').textContent = new Date().toISOString().slice(11, 19) + ' UTC';
+        const pov = globe.pointOfView();
+        if (pov) {
+          document.getElementById('hud-coords').textContent = `LAT ${pov.lat.toFixed(2)}° LNG ${pov.lng.toFixed(2)}°`;
+        }
+      }
+      setInterval(updateHUD, 500);
 
       document.querySelectorAll('[data-layer]').forEach(button => button.addEventListener('click', () => {
         document.querySelectorAll('[data-layer]').forEach(item => item.classList.remove('active'));
         button.classList.add('active');
         const layer = button.dataset.layer;
-        globe.pointsData(layer === 'all' ? assets : assets.filter(asset => asset.type === layer));
+        globe.pointsData(getFilteredPoints(layer));
       }));
+
+      async function fetchBackendGeofences() {
+        try {
+          const res = await fetch('/api/geofences');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              loadedGeofences = data;
+              globe.ringsData(buildRingsData());
+              updateBadges();
+            }
+          }
+        } catch (e) {
+          console.info('Backend geofences em modo offline/demo.');
+        }
+      }
+      fetchBackendGeofences();
 
       async function loadEarthquakes() {
         try {
