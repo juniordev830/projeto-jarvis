@@ -20,6 +20,7 @@ if str(ROOT) not in sys.path:
 from python.gps_core import AutomationEngine, Geofence, Position, distance_meters  # noqa: E402
 from python.settings import Settings  # noqa: E402
 from backend.storage import GeofenceStore  # noqa: E402
+from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_opensky  # noqa: E402
 
 
 class GeofenceInput(BaseModel):
@@ -64,6 +65,25 @@ def public_config() -> dict[str, str | bool | None]:
         "google_maps_api_key": settings.google_maps_api_key,
         "google_maps_enabled": bool(settings.google_maps_api_key),
     }
+
+
+@app.get("/api/sources/satellites")
+def satellites() -> dict[str, object]:
+    try:
+        satellites = fetch_celestrak(settings.celestrak_gp_url)
+        return {"source": "CelesTrak", "count": len(satellites), "items": satellites[:100]}
+    except SourceUnavailable as error:
+        return {"source": "CelesTrak", "count": 0, "items": [], "error": str(error)}
+
+
+@app.get("/api/sources/aircraft")
+def aircraft() -> dict[str, object]:
+    try:
+        payload = fetch_opensky()
+        states = payload.get("states", []) if isinstance(payload, dict) else []
+        return {"source": "OpenSky", "count": len(states), "items": states[:100]}
+    except SourceUnavailable as error:
+        return {"source": "OpenSky", "count": 0, "items": [], "error": str(error)}
 
 
 @app.post("/api/geofences", status_code=201)
