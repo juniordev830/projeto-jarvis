@@ -11,6 +11,8 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - `python/settings.py`: leitura segura das configurações pelo ambiente.
 - O arquivo `.env` local é carregado automaticamente ao iniciar Python; variáveis do sistema têm prioridade.
 - `SENTINEL_ALERT_WEBHOOK_URL` pode apontar para um webhook compatível com JSON para receber eventos de geofence.
+- `SENTINEL_API_TOKEN` habilita autenticação Bearer opcional para proteger a API.
+- `GET /api/routes/bicycle` consulta rotas de bicicleta do OSRM/OpenStreetMap.
 - `backend/app.py`: API FastAPI com health check, fontes, geofences e WebSocket de posições.
 - O botão `Mapa satélite` usa Google Maps Satellite e Traffic Layer quando `GOOGLE_MAPS_API_KEY` estiver configurada com restrições de domínio.
 - `tests/test_gps.py`: testes do núcleo de distância e transição de geofence.

@@ -38,6 +38,7 @@ class Settings:
     usgs_earthquake_feed: str
     celestrak_gp_url: str
     alert_webhook_url: str | None
+    api_token: str | None
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -53,6 +54,7 @@ class Settings:
             usgs_earthquake_feed=os.getenv("USGS_EARTHQUAKE_FEED", "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"),
             celestrak_gp_url=os.getenv("CELESTRAK_GP_URL", "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json"),
             alert_webhook_url=_optional_env("SENTINEL_ALERT_WEBHOOK_URL"),
+            api_token=_optional_env("SENTINEL_API_TOKEN"),
         )
 
     def enabled_sources(self) -> list[str]:

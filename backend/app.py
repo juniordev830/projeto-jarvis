@@ -9,7 +9,8 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -22,6 +23,7 @@ from python.settings import Settings  # noqa: E402
 from backend.storage import GeofenceStore  # noqa: E402
 from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_opensky  # noqa: E402
 from backend.alerts import send_webhook  # noqa: E402
+from backend.routing import bicycle_route  # noqa: E402
 
 
 class GeofenceInput(BaseModel):
@@ -43,6 +45,14 @@ store = GeofenceStore(os.getenv("SENTINEL_DB_PATH", str(ROOT / ".data" / "sentin
 geofences: dict[str, tuple[Geofence, AutomationEngine]] = {}
 for saved_fence in store.list():
     geofences[saved_fence.name] = (saved_fence, AutomationEngine(saved_fence))
+
+
+@app.middleware("http")
+async def optional_token_auth(request: Request, call_next):
+    if settings.api_token and request.url.path not in {"/api/health", "/api/public-config"}:
+        if request.headers.get("authorization") != f"Bearer {settings.api_token}":
+            return JSONResponse(status_code=401, content={"detail": "Token de API inválido"})
+    return await call_next(request)
 
 
 @app.get("/api/health")
@@ -85,6 +95,14 @@ def aircraft() -> dict[str, object]:
         return {"source": "OpenSky", "count": len(states), "items": states[:100]}
     except SourceUnavailable as error:
         return {"source": "OpenSky", "count": 0, "items": [], "error": str(error)}
+
+
+@app.get("/api/routes/bicycle")
+def bicycle(start_lat: float, start_lon: float, end_lat: float, end_lon: float) -> dict[str, object]:
+    try:
+        return bicycle_route(start_lat, start_lon, end_lat, end_lon)
+    except SourceUnavailable as error:
+        return {"code": "Unavailable", "routes": [], "error": str(error)}
 
 
 @app.post("/api/geofences", status_code=201)
