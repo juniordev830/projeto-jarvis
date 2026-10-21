@@ -1,4 +1,4 @@
-"""Núcleo de automação GPS do Jarvis Sentinel.
+"""Núcleo de automação GPS do Sentinel.
 
 Funciona em modo simulado para desenvolvimento e pode receber posições reais
 por uma integração posterior com um módulo GPS ou API de localização.
@@ -75,7 +75,7 @@ class AutomationEngine:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Automação GPS com geofencing do Projeto Jarvis.")
+    parser = argparse.ArgumentParser(description="Automação GPS com geofencing do Projeto Sentinel.")
     parser.add_argument("--demo", action="store_true", help="Executa uma sequência de posições simuladas")
     parser.add_argument("--lat", type=float, help="Latitude da posição")
     parser.add_argument("--lon", type=float, help="Longitude da posição")

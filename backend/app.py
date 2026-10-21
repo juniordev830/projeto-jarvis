@@ -1,4 +1,4 @@
-"""API HTTP/WebSocket do Projeto Jarvis."""
+"""API HTTP/WebSocket do Projeto Sentinel."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from python.jarvis_gps import AutomationEngine, Geofence, Position, distance_meters  # noqa: E402
+from python.gps_core import AutomationEngine, Geofence, Position, distance_meters  # noqa: E402
 from python.settings import Settings  # noqa: E402
 
 
@@ -33,14 +33,14 @@ class PositionInput(BaseModel):
     timestamp: float | None = None
 
 
-app = FastAPI(title="Jarvis GPS API", version="0.1.0")
+app = FastAPI(title="Sentinel GPS API", version="0.1.0")
 settings = Settings.from_environment()
 geofences: dict[str, tuple[Geofence, AutomationEngine]] = {}
 
 
 @app.get("/api/health")
 def health() -> dict[str, object]:
-    return {"status": "ok", "service": "jarvis-api", "timestamp": time.time()}
+    return {"status": "ok", "service": "sentinel-api", "timestamp": time.time()}
 
 
 @app.get("/api/sources")

@@ -1,4 +1,4 @@
-"""Configuração dos conectores externos do Projeto Jarvis."""
+"""Configuração dos conectores externos do Projeto Sentinel."""
 
 from dataclasses import dataclass
 import os

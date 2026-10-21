@@ -1,6 +1,6 @@
 import unittest
 
-from python.jarvis_gps import AutomationEngine, Geofence, Position, distance_meters
+from python.gps_core import AutomationEngine, Geofence, Position, distance_meters
 
 
 class GpsCoreTests(unittest.TestCase):
