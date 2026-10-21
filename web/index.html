@@ -23,6 +23,11 @@
       .brand span { display:block; margin-top:4px; color:var(--muted); font-size:12px; }
       .status { color:var(--green); font-size:12px; }
       .panel { padding:12px; }
+      .tools { display:flex; gap:8px; align-items:center; }
+      input { width:220px; border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:#dbeafe; background:#111c31; font:inherit; }
+      .inspector { position:fixed; right:20px; top:92px; max-width:280px; pointer-events:auto; }
+      .inspector[hidden] { display:none; }
+      .inspector strong { color:var(--cyan); }
       .filters { display:flex; gap:8px; flex-wrap:wrap; }
       button { border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:#dbeafe; background:#111c31; cursor:pointer; font:inherit; }
       button:hover,button.active { border-color:var(--cyan); color:var(--cyan); background:#123047; }
@@ -37,8 +42,9 @@
     <div class="hud">
       <div class="topbar">
         <div class="brand"><strong>Sentinel Atlas</strong><span>Centro de inteligência geoespacial · modo demonstração</span></div>
-        <div id="api-status" class="panel status">● DEMONSTRAÇÃO · dados simulados</div>
+        <div class="tools"><input id="asset-search" type="search" placeholder="Buscar ativo ou cidade" aria-label="Buscar ativo ou cidade" /><div id="api-status" class="panel status">● DEMONSTRAÇÃO · dados simulados</div></div>
       </div>
+      <div id="inspector" class="panel inspector" hidden></div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
           <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="map-view">Mapa satélite</button>
@@ -69,6 +75,11 @@
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
         .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.45)
         .pointLabel(d => `<b>${d.label}</b><br><small>${d.type === 'traffic' ? 'trânsito · fonte simulada' : d.type + ' · fonte simulada'}</small>`)
+        .onPointClick(asset => {
+          const inspector = document.getElementById('inspector');
+          inspector.innerHTML = `<strong>${asset.label}</strong><br><small>Tipo: ${asset.type}<br>Latitude: ${asset.lat.toFixed(4)}<br>Longitude: ${asset.lng.toFixed(4)}<br>Fonte: ${asset.type === 'earthquake' ? 'USGS' : 'demonstração'}</small>`;
+          inspector.hidden = false;
+        })
         .arcsData(routes).arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng').arcColor('color').arcDashLength(0.45).arcDashGap(0.18).arcDashAnimateTime(1800)
         .pointsData(assets);
       globe.controls().autoRotate = true;
@@ -97,6 +108,13 @@
         }
       }
       loadEarthquakes();
+
+      document.getElementById('asset-search').addEventListener('input', event => {
+        const query = event.target.value.trim().toLowerCase();
+        const matches = query ? assets.filter(asset => asset.label.toLowerCase().includes(query) || asset.type.includes(query)) : assets;
+        globe.pointsData(matches);
+        if (matches.length === 1) globe.pointOfView({ lat: matches[0].lat, lng: matches[0].lng, altitude: 1.8 }, 700);
+      });
 
       async function refreshApiStatus() {
         const status = document.getElementById('api-status');
