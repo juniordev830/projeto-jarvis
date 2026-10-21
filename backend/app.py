@@ -21,7 +21,7 @@ if str(ROOT) not in sys.path:
 from python.gps_core import AutomationEngine, Geofence, Position, distance_meters  # noqa: E402
 from python.settings import Settings  # noqa: E402
 from backend.storage import GeofenceStore  # noqa: E402
-from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_opensky  # noqa: E402
+from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_opensky, fetch_text, parse_tle_text  # noqa: E402
 from backend.alerts import send_webhook  # noqa: E402
 from backend.routing import bicycle_route  # noqa: E402
 from backend.orbits import propagate_tle  # noqa: E402
@@ -91,7 +91,8 @@ def satellites() -> dict[str, object]:
 @app.get("/api/sources/starlink")
 def starlink() -> dict[str, object]:
     try:
-        records = fetch_celestrak(settings.celestrak_starlink_url)
+        tle_url = settings.celestrak_starlink_url.replace("FORMAT=json", "FORMAT=tle")
+        records = parse_tle_text(fetch_text(tle_url))
         items = []
         for record in records[:200]:
             if record.get("TLE_LINE1") and record.get("TLE_LINE2"):
