@@ -24,7 +24,7 @@
       button:hover,button.active { border-color:var(--cyan); color:var(--cyan); background:#123047; }
       .legend { display:flex; gap:14px; color:var(--muted); font-size:12px; }
       .legend span::before { content:""; display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; background:var(--cyan); }
-      .legend .ship::before { background:var(--orange); }.legend .sat::before { background:#c4b5fd; }
+      .legend .ship::before { background:var(--orange); }.legend .sat::before { background:#c4b5fd; }.legend .traffic::before { background:#f87171; }
       @media (max-width:600px) { .hud { padding:12px; }.topbar,.bottombar { align-items:flex-start; flex-direction:column; }.bottombar { align-items:stretch; }.legend { justify-content:center; } }
     </style>
   </head>
@@ -37,9 +37,9 @@
       </div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button>
+          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button>
         </div>
-        <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span></div>
+        <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span></div>
       </div>
     </div>
     <script>
@@ -49,12 +49,19 @@
         { id:'ship-1', type:'ship', label:'Cargo Aurora · Santos', lat:-24.0, lng:-46.3, color:'#fdba74', altitude:0.02 },
         { id:'sat-1', type:'satellite', label:'ISS · órbita baixa', lat:20, lng:30, color:'#c4b5fd', altitude:0.18 },
         { id:'sat-2', type:'satellite', label:'Starlink · demonstração', lat:-20, lng:120, color:'#c4b5fd', altitude:0.16 },
+        { id:'traffic-1', type:'traffic', label:'Congestionamento · Av. Paulista', lat:-23.561, lng:-46.656, color:'#f87171', altitude:0.01 },
+        { id:'traffic-2', type:'traffic', label:'Incidente · Marginal Pinheiros', lat:-23.59, lng:-46.7, color:'#facc15', altitude:0.01 },
+      ];
+      const routes = [
+        { startLat:-23.55, startLng:-46.63, endLat:-23.59, endLng:-46.7, color:'#f87171', label:'Rota com congestionamento' },
+        { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#86efac', label:'Rota alternativa' },
       ];
       const globe = Globe()(document.getElementById('globe'))
         .globeImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/earth-night.jpg')
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
         .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.45)
-        .pointLabel(d => `<b>${d.label}</b><br><small>${d.type} · fonte simulada</small>`)
+        .pointLabel(d => `<b>${d.label}</b><br><small>${d.type === 'traffic' ? 'trânsito · fonte simulada' : d.type + ' · fonte simulada'}</small>`)
+        .arcsData(routes).arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng').arcColor('color').arcDashLength(0.45).arcDashGap(0.18).arcDashAnimateTime(1800)
         .pointsData(assets);
       globe.controls().autoRotate = true;
       globe.controls().autoRotateSpeed = 0.25;
