@@ -33,7 +33,7 @@
     <div class="hud">
       <div class="topbar">
         <div class="brand"><strong>JARVIS / GOD’S EYE</strong><span>Centro de inteligência geoespacial · modo demonstração</span></div>
-        <div class="panel status">● SISTEMA ONLINE · dados simulados</div>
+        <div id="api-status" class="panel status">● DEMONSTRAÇÃO · dados simulados</div>
       </div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
@@ -71,6 +71,20 @@
         const layer = button.dataset.layer;
         globe.pointsData(layer === 'all' ? assets : assets.filter(asset => asset.type === layer));
       }));
+
+      async function refreshApiStatus() {
+        const status = document.getElementById('api-status');
+        try {
+          const response = await fetch('/api/health', { headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error('API indisponível');
+          const data = await response.json();
+          status.textContent = `● API ONLINE · ${new Date(data.timestamp * 1000).toLocaleTimeString()}`;
+        } catch {
+          status.textContent = '● DEMONSTRAÇÃO · API não conectada';
+        }
+      }
+      refreshApiStatus();
+      setInterval(refreshApiStatus, 30000);
     </script>
   </body>
 </html>
