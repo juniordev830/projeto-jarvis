@@ -147,6 +147,58 @@
         pointer-events: auto;
         animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
+      .ai-panel {
+        position: fixed;
+        right: 20px;
+        top: 86px;
+        width: 360px;
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 100;
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .ai-panel[hidden] { display: none; }
+      .ai-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--panel-border);
+        padding-bottom: 8px;
+      }
+      .ai-header strong { color: var(--cyan); font-size: 14px; font-weight: 700; }
+      .ai-threat-badge {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+      }
+      .threat-BAIXO { background: rgba(74, 222, 128, 0.2); color: var(--green); border: 1px solid var(--green); }
+      .threat-MODERADO { background: rgba(251, 146, 60, 0.2); color: var(--orange); border: 1px solid var(--orange); }
+      .threat-ALTO { background: rgba(248, 113, 113, 0.2); color: var(--red); border: 1px solid var(--red); }
+      .threat-CRÍTICO { background: rgba(239, 68, 68, 0.4); color: #fff; border: 1px solid #ef4444; animation: pulse 1s infinite; }
+      .ai-chat-box {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--panel-border);
+        border-radius: 10px;
+        padding: 10px;
+        max-height: 220px;
+        overflow-y: auto;
+      }
+      .ai-msg {
+        font-size: 12px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+      }
+      .ai-msg.user { color: var(--cyan); text-align: right; font-weight: 500; }
+      .ai-msg.bot { color: #e2e8f0; }
       @keyframes slideIn {
         from { opacity: 0; transform: translateY(-8px); }
         to { opacity: 1; transform: translateY(0); }
@@ -276,6 +328,27 @@
 
       <div id="inspector" class="panel inspector" hidden></div>
 
+      <div id="ai-panel" class="panel ai-panel" hidden>
+        <div class="ai-header">
+          <strong>🤖 Copiloto GeoINT AI</strong>
+          <span id="ai-threat" class="ai-threat-badge threat-BAIXO">AMEAÇA: BAIXO</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);">Análise preditiva e monitoramento de riscos em tempo real.</div>
+        <button id="btn-generate-report" style="width:100%;justify-content:center;background:rgba(56,189,248,0.2);border-color:var(--cyan);color:#fff;">
+          ⚡ Gerar Relatório Situacional
+        </button>
+        <div id="ai-report-summary" style="font-size:11px;color:#cbd5e1;line-height:1.4;background:rgba(0,0,0,0.3);padding:8px;border-radius:8px;">
+          Clique acima para analisar vetores e perímetros em tempo real.
+        </div>
+        <div class="ai-chat-box" id="ai-chat-box">
+          <div class="ai-msg bot">🤖 <b>Copiloto GeoINT:</b> Olá! Faça uma pergunta sobre a frota, satélites, riscos ou geofences.</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input id="ai-query-input" type="text" placeholder="Pergunte ao Copiloto..." style="flex:1;width:auto;" />
+          <button id="ai-query-send" style="padding:6px 12px;">Perguntar</button>
+        </div>
+      </div>
+
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
           <button class="active" data-layer="all">Tudo <span id="cnt-all" class="badge">0</span></button>
@@ -289,6 +362,7 @@
           <button id="replay-history">⏱️ Histórico</button>
           <button id="texture-toggle">☀️ Luz do dia</button>
           <button id="map-view">🛰️ Mapa satélite</button>
+          <button id="toggle-ai" style="border-color:var(--cyan);color:var(--cyan);background:rgba(56,189,248,0.15);">🤖 Copiloto IA</button>
         </div>
         <div class="panel legend">
           <span>Aviões</span>
@@ -606,6 +680,70 @@
         globe.pointsData(matches);
         if (matches.length === 1) globe.pointOfView({ lat: matches[0].lat, lng: matches[0].lng, altitude: 1.8 }, 700);
       });
+
+      // Interatividade do Copiloto IA
+      const toggleAiBtn = document.getElementById('toggle-ai');
+      const aiPanel = document.getElementById('ai-panel');
+      const inspectorPanel = document.getElementById('inspector');
+
+      toggleAiBtn.addEventListener('click', () => {
+        const isHidden = aiPanel.hidden;
+        aiPanel.hidden = !isHidden;
+        if (!aiPanel.hidden) {
+          inspectorPanel.hidden = true;
+          toggleAiBtn.classList.add('active');
+        } else {
+          toggleAiBtn.classList.remove('active');
+        }
+      });
+
+      document.getElementById('btn-generate-report').addEventListener('click', async () => {
+        const summaryEl = document.getElementById('ai-report-summary');
+        const threatEl = document.getElementById('ai-threat');
+        summaryEl.textContent = '⏳ Analisando telemetria e perímetros...';
+        try {
+          const res = await fetch('/api/ai/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assets, geofences: loadedGeofences })
+          });
+          if (!res.ok) throw new Error('Falha na requisição');
+          const data = await res.json();
+          threatEl.textContent = `AMEAÇA: ${data.threat_level}`;
+          threatEl.className = `ai-threat-badge threat-${data.threat_level}`;
+          summaryEl.textContent = data.summary;
+        } catch (err) {
+          summaryEl.textContent = '❌ Erro ao consultar a API do Copiloto IA.';
+        }
+      });
+
+      async function sendAiQuery() {
+        const input = document.getElementById('ai-query-input');
+        const chatBox = document.getElementById('ai-chat-box');
+        const question = input.value.trim();
+        if (!question) return;
+
+        chatBox.innerHTML += `<div class="ai-msg user"><b>Você:</b> ${question}</div>`;
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+          const res = await fetch('/api/ai/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, context: { assets, geofences: loadedGeofences } })
+          });
+          if (!res.ok) throw new Error('Falha na resposta');
+          const data = await res.json();
+          chatBox.innerHTML += `<div class="ai-msg bot"><b>🤖 Copiloto:</b> ${data.answer.replace(/\n/g, '<br>')}</div>`;
+        } catch (err) {
+          chatBox.innerHTML += `<div class="ai-msg bot" style="color:var(--red);"><b>🤖 Copiloto:</b> Desculpe, ocorreu um erro ao processar sua pergunta.</div>`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      document.getElementById('ai-query-send').addEventListener('click', sendAiQuery);
+      document.getElementById('ai-query-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendAiQuery(); });
 
       async function refreshApiStatus() {
         const status = document.getElementById('api-status');

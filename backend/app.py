@@ -25,6 +25,17 @@ from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_ope
 from backend.alerts import send_webhook  # noqa: E402
 from backend.routing import bicycle_route  # noqa: E402
 from backend.orbits import propagate_tle  # noqa: E402
+from backend.ai import GeoINTAnalyzer  # noqa: E402
+
+
+class AIAnalyzeInput(BaseModel):
+    assets: list[dict[str, Any]] = Field(default_factory=list)
+    geofences: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AIQueryInput(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    context: dict[str, Any] = Field(default_factory=dict)
 
 
 class GeofenceInput(BaseModel):
@@ -40,8 +51,11 @@ class PositionInput(BaseModel):
     timestamp: float | None = None
 
 
+from typing import Any  # noqa: E402
+
 app = FastAPI(title="Sentinel Atlas GPS API", version="0.1.0")
 settings = Settings.from_environment()
+ai_analyzer = GeoINTAnalyzer()
 store = GeofenceStore(os.getenv("SENTINEL_DB_PATH", str(ROOT / ".data" / "sentinel.sqlite3")))
 geofences: dict[str, tuple[Geofence, AutomationEngine]] = {}
 for saved_fence in store.list():
@@ -148,6 +162,21 @@ def delete_geofence(name: str) -> dict[str, object]:
 @app.get("/api/positions/history")
 def position_history(limit: int = 100) -> list[dict[str, float]]:
     return [asdict(position) for position in store.list_positions(limit)]
+
+
+@app.post("/api/ai/analyze")
+def ai_analyze(payload: AIAnalyzeInput) -> dict[str, Any]:
+    # Se nenhuma geofence for fornecida na requisição, usa as cadastradas no backend
+    fences = payload.geofences or [asdict(fence) for fence, _ in geofences.values()]
+    return ai_analyzer.analyze_situation(payload.assets, fences)
+
+
+@app.post("/api/ai/query")
+def ai_query(payload: AIQueryInput) -> dict[str, Any]:
+    ctx = payload.context
+    if "geofences" not in ctx:
+        ctx["geofences"] = [asdict(fence) for fence, _ in geofences.values()]
+    return ai_analyzer.query_copilot(payload.question, ctx)
 
 
 @app.websocket("/ws/positions")
