@@ -83,6 +83,13 @@
         day: 'https://unpkg.com/three-globe@2.43.0/example/img/earth-blue-marble.jpg',
       };
       let currentTexture = 'night';
+      function replaceAssets(type, incoming) {
+        for (let index = assets.length - 1; index >= 0; index -= 1) {
+          if (assets[index].type === type) assets.splice(index, 1);
+        }
+        assets.push(...incoming);
+        globe.pointsData(assets);
+      }
       const globe = Globe()(document.getElementById('globe'))
         .globeImageUrl(textures[currentTexture])
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
@@ -117,13 +124,13 @@
             const magnitude = feature.properties.mag ?? 0;
             return { id: `quake-${feature.id}`, type: 'earthquake', lat, lng, color: '#f472b6', altitude: Math.min(Math.max(depth / 10000, 0.01), 0.08), label: `M${magnitude.toFixed(1)} · ${feature.properties.place || 'evento USGS'}` };
           });
-          assets.push(...earthquakes);
-          globe.pointsData(assets);
+          replaceAssets('earthquake', earthquakes);
         } catch (error) {
           console.info('Camada USGS indisponível:', error.message);
         }
       }
       loadEarthquakes();
+      setInterval(loadEarthquakes, 120000);
 
       async function loadStarlink() {
         try {
@@ -131,14 +138,14 @@
           if (!response.ok) throw new Error('Starlink indisponível');
           const payload = await response.json();
           if (payload.items?.length) {
-            assets.push(...payload.items);
-            globe.pointsData(assets);
+            replaceAssets('satellite', payload.items);
           }
         } catch (error) {
           console.info('Camada Starlink indisponível:', error.message);
         }
       }
       loadStarlink();
+      setInterval(loadStarlink, 300000);
 
       document.getElementById('texture-toggle').addEventListener('click', event => {
         currentTexture = currentTexture === 'night' ? 'day' : 'night';
