@@ -9,6 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,3 +77,7 @@ async def positions(websocket: WebSocket) -> None:
             await websocket.send_text(json.dumps({"position": asdict(position), "events": events}))
     except WebSocketDisconnect:
         return
+
+
+# Mantido por último para não interceptar as rotas da API e do WebSocket.
+app.mount("/", StaticFiles(directory=ROOT / "web", html=True), name="web")

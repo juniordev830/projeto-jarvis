@@ -49,7 +49,7 @@ pip install -r backend/requirements.txt
 uvicorn backend.app:app --reload
 ```
 
-Endpoints principais: `GET /api/health`, `GET /api/sources`, `GET/POST /api/geofences` e `WS /ws/positions`.
+Ao iniciar a API, o painel fica disponível em `http://localhost:8000`. Endpoints principais: `GET /api/health`, `GET /api/sources`, `GET/POST /api/geofences` e `WS /ws/positions`.
 
 Para executar com Docker: `docker compose up --build`.
 Projeto de automação Jarvis
