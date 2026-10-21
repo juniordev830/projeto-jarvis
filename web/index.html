@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
     <script src="https://unpkg.com/globe.gl@2.37.0"></script>
     <style>
       :root {
@@ -413,10 +414,14 @@
         return points.filter(a => a.type === layer);
       }
 
+      // Renderização Hiper-Realista 3D do Globo Terra
       const globe = Globe()(document.getElementById('globe'))
         .globeImageUrl(textures[currentTexture])
+        .bumpImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/earth-topology.png')
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
-        .showAtmosphere(true).atmosphereColor('#38bdf8').atmosphereAltitude(0.2)
+        .showAtmosphere(true)
+        .atmosphereColor('#38bdf8')
+        .atmosphereAltitude(0.25)
         .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointColor('color').pointRadius(0.5)
         .pointLabel(d => `<div style="background:rgba(15,23,42,0.92);padding:6px 10px;border-radius:8px;border:1px solid rgba(56,189,248,0.35);font-family:sans-serif;font-size:12px;box-shadow:0 8px 16px rgba(0,0,0,0.5);"><b>${d.label}</b><br><span style="color:#94a3b8;font-size:10px;">${d.type === 'earthquake' ? 'USGS · Fonte Pública' : d.type.toUpperCase() + ' · Ativo Tático'}</span></div>`)
         .onPointClick(asset => {
@@ -431,6 +436,37 @@
         .ringLat('lat').ringLng('lng').ringColor('color').ringMaxRadius('maxRadius')
         .ringPropagationSpeed('propagationSpeed').ringRepeatPeriod('repeatPeriod')
         .pointsData(getFilteredPoints('all'));
+
+      // Ajuste de brilho e brilho especular do oceano no material do Three.js
+      const globeMaterial = globe.globeMaterial();
+      if (globeMaterial) {
+        globeMaterial.bumpScale = 12;
+        if (window.THREE) {
+          globeMaterial.specular = new THREE.Color('#38bdf8');
+          globeMaterial.shininess = 20;
+        }
+      }
+
+      // Adicionar camada de nuvens 3D flutuantes com rotação independente
+      if (window.THREE) {
+        new THREE.TextureLoader().load('https://unpkg.com/three-globe@2.43.0/example/img/clouds.png', cloudsTexture => {
+          const clouds = new THREE.Mesh(
+            new THREE.SphereGeometry(globe.getGlobeRadius() * 1.012, 64, 64),
+            new THREE.MeshPhongMaterial({
+              map: cloudsTexture,
+              transparent: true,
+              opacity: 0.38,
+              depthWrite: false
+            })
+          );
+          globe.scene().add(clouds);
+
+          (function rotateClouds() {
+            clouds.rotation.y += 0.0002;
+            requestAnimationFrame(rotateClouds);
+          })();
+        });
+      }
 
       globe.controls().autoRotate = true;
       globe.controls().autoRotateSpeed = 0.25;
