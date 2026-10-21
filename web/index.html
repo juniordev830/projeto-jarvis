@@ -47,7 +47,7 @@
       <div id="inspector" class="panel inspector" hidden></div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="replay-history">Reproduzir histórico</button><button id="texture-toggle">Luz do dia</button><button id="map-view">Mapa satélite</button>
+          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="my-location">Minha localização</button><button id="replay-history">Reproduzir histórico</button><button id="texture-toggle">Luz do dia</button><button id="map-view">Mapa satélite</button>
         </div>
         <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span><span class="earthquake">Terremotos</span></div>
       </div>
@@ -84,6 +84,7 @@
       };
       let currentTexture = 'night';
       let replayTimer;
+      let positionSocket;
       function replaceAssets(type, incoming) {
         for (let index = assets.length - 1; index >= 0; index -= 1) {
           if (assets[index].type === type) assets.splice(index, 1);
@@ -178,6 +179,36 @@
         }
       }
       document.getElementById('replay-history').addEventListener('click', replayHistory);
+
+      function sendDevicePosition(payload) {
+        if (!positionSocket || positionSocket.readyState !== WebSocket.OPEN) {
+          const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+          positionSocket = new WebSocket(`${protocol}://${location.host}/ws/positions`);
+          positionSocket.addEventListener('open', () => positionSocket.send(JSON.stringify(payload)), { once: true });
+          return;
+        }
+        positionSocket.send(JSON.stringify(payload));
+      }
+
+      function startDeviceLocation() {
+        const status = document.getElementById('api-status');
+        if (!navigator.geolocation) {
+          status.textContent = '● LOCALIZAÇÃO INDISPONÍVEL NESTE DISPOSITIVO';
+          return;
+        }
+        status.textContent = '● SOLICITANDO PERMISSÃO DE LOCALIZAÇÃO';
+        navigator.geolocation.watchPosition(position => {
+          const { latitude, longitude, accuracy } = position.coords;
+          const payload = { latitude, longitude, timestamp: Date.now() / 1000 };
+          replaceAssets('device', [{ id: 'connected-device', type: 'device', lat: latitude, lng: longitude, color: '#86efac', altitude: 0.035, label: `Dispositivo conectado · precisão ${Math.round(accuracy)}m` }]);
+          globe.pointOfView({ lat: latitude, lng: longitude, altitude: 1.35 }, 800);
+          sendDevicePosition(payload);
+          status.textContent = `● LOCALIZAÇÃO ATIVA · precisão ${Math.round(accuracy)}m`;
+        }, error => {
+          status.textContent = `● LOCALIZAÇÃO NÃO ATIVADA · ${error.message}`;
+        }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+      }
+      document.getElementById('my-location').addEventListener('click', startDeviceLocation);
 
       document.getElementById('asset-search').addEventListener('input', event => {
         const query = event.target.value.trim().toLowerCase();

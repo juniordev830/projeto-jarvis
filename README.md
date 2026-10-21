@@ -17,6 +17,7 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - O botão `Mapa satélite` usa Google Maps Satellite e Traffic Layer quando `GOOGLE_MAPS_API_KEY` estiver configurada com restrições de domínio.
 - `/api/sources/starlink` busca elementos orbitais do CelesTrak e calcula posições com SGP4 quando a dependência estiver instalada.
 - O botão `Reproduzir histórico` anima no globo as posições registradas em `/api/positions/history`.
+- O botão `Minha localização` solicita permissão do navegador, mostra o dispositivo conectado no globo e envia as posições à API para geofencing e histórico.
 - `tests/test_gps.py`: testes do núcleo de distância e transição de geofence.
 - `backend/storage.py`: persistência SQLite local das geofences.
 - `Dockerfile` e `docker-compose.yml`: execução local reproduzível da API.
