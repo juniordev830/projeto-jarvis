@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#070b16" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <title>Sentinel Atlas · God’s Eye View</title>
     <script src="https://unpkg.com/globe.gl@2.37.0"></script>
     <style>
@@ -56,6 +57,7 @@
         { id:'traffic-1', type:'traffic', label:'Congestionamento · Av. Paulista', lat:-23.561, lng:-46.656, color:'#f87171', altitude:0.01 },
         { id:'traffic-2', type:'traffic', label:'Incidente · Marginal Pinheiros', lat:-23.59, lng:-46.7, color:'#facc15', altitude:0.01 },
       ];
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
       const routes = [
         { startLat:-23.55, startLng:-46.63, endLat:-23.59, endLng:-46.7, color:'#f87171', label:'Rota com congestionamento' },
         { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#86efac', label:'Rota alternativa' },

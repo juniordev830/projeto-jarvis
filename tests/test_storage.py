@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from backend.storage import GeofenceStore
-from python.gps_core import Geofence
+from python.gps_core import Geofence, Position
 
 
 class GeofenceStoreTests(unittest.TestCase):
@@ -13,6 +13,15 @@ class GeofenceStoreTests(unittest.TestCase):
             GeofenceStore(path).save(Geofence("base", -23.55, -46.63, 250))
             saved = GeofenceStore(path).list()
         self.assertEqual(saved, [Geofence("base", -23.55, -46.63, 250)])
+
+    def test_position_history_is_limited_and_persisted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sentinel.sqlite3"
+            store = GeofenceStore(path)
+            store.save_position(Position(-23.55, -46.63, 1))
+            store.save_position(Position(-23.56, -46.64, 2))
+            saved = store.list_positions(1)
+        self.assertEqual(saved, [Position(-23.56, -46.64, 2)])
 
 
 if __name__ == "__main__":

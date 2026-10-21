@@ -79,6 +79,11 @@ def list_geofences() -> list[dict[str, object]]:
     return [asdict(fence) for fence, _ in geofences.values()]
 
 
+@app.get("/api/positions/history")
+def position_history(limit: int = 100) -> list[dict[str, float]]:
+    return [asdict(position) for position in store.list_positions(limit)]
+
+
 @app.websocket("/ws/positions")
 async def positions(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -86,6 +91,7 @@ async def positions(websocket: WebSocket) -> None:
         while True:
             payload = PositionInput.model_validate_json(await websocket.receive_text())
             position = Position(payload.latitude, payload.longitude, payload.timestamp or time.time())
+            store.save_position(position)
             events = []
             for fence, engine in geofences.values():
                 events.append({

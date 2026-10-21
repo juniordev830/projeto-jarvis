@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-from python.gps_core import Geofence
+from python.gps_core import Geofence, Position
 
 
 class GeofenceStore:
@@ -21,6 +21,14 @@ class GeofenceStore:
                         latitude REAL NOT NULL,
                         longitude REAL NOT NULL,
                         radius_meters REAL NOT NULL
+                    )
+                """)
+                connection.execute("""
+                    CREATE TABLE IF NOT EXISTS positions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        timestamp REAL NOT NULL
                     )
                 """)
 
@@ -42,3 +50,20 @@ class GeofenceStore:
                     "SELECT name, latitude, longitude, radius_meters FROM geofences ORDER BY name"
                 ).fetchall()
         return [Geofence(*row) for row in rows]
+
+    def save_position(self, position: Position) -> None:
+        with closing(self._connect()) as connection:
+            with connection:
+                connection.execute(
+                    "INSERT INTO positions (latitude, longitude, timestamp) VALUES (?, ?, ?)",
+                    (position.latitude, position.longitude, position.timestamp),
+                )
+
+    def list_positions(self, limit: int = 100) -> list[Position]:
+        safe_limit = max(1, min(limit, 1000))
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                "SELECT latitude, longitude, timestamp FROM positions ORDER BY timestamp DESC LIMIT ?",
+                (safe_limit,),
+            ).fetchall()
+        return [Position(*row) for row in rows]
