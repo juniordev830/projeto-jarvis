@@ -53,6 +53,19 @@ def sources() -> dict[str, list[str]]:
     return {"enabled": settings.enabled_sources()}
 
 
+@app.get("/api/public-config")
+def public_config() -> dict[str, str | bool | None]:
+    """Expõe apenas configurações destinadas ao navegador.
+
+    A chave do Google Maps deve ter restrições de domínio configuradas no Google
+    Cloud; segredos de servidores nunca são retornados por esta rota.
+    """
+    return {
+        "google_maps_api_key": settings.google_maps_api_key,
+        "google_maps_enabled": bool(settings.google_maps_api_key),
+    }
+
+
 @app.post("/api/geofences", status_code=201)
 def create_geofence(payload: GeofenceInput) -> dict[str, object]:
     fence = Geofence(**payload.model_dump())

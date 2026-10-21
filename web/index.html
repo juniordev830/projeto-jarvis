@@ -11,6 +11,9 @@
       * { box-sizing:border-box; }
       body { margin:0; min-height:100vh; overflow:hidden; background:radial-gradient(circle at 50% 40%,#182b4a 0,#070b16 58%); color:#f8fafc; font:14px Inter,Segoe UI,system-ui,sans-serif; }
       #globe { position:fixed; inset:0; }
+      #map { position:fixed; inset:0; display:none; }
+      body.map-mode #globe { display:none; }
+      body.map-mode #map { display:block; }
       .hud { position:fixed; inset:0; pointer-events:none; padding:20px; display:flex; flex-direction:column; justify-content:space-between; }
       .topbar,.bottombar { display:flex; align-items:center; justify-content:space-between; gap:16px; pointer-events:auto; }
       .brand,.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:0 14px 36px #0006; backdrop-filter:blur(14px); }
@@ -37,11 +40,12 @@
       </div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button>
+          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="map-view">Mapa satélite</button>
         </div>
         <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span><span class="earthquake">Terremotos</span></div>
       </div>
     </div>
+    <div id="map" aria-label="Mapa Google com imagens de satélite e trânsito"></div>
     <script>
       const assets = [
         { id:'flight-1', type:'aircraft', label:'JJ 3812 · São Paulo', lat:-23.55, lng:-46.63, color:'#67e8f9', altitude:0.04 },
@@ -57,6 +61,7 @@
         { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#86efac', label:'Rota alternativa' },
       ];
       const earthquakeSource = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson';
+      let googleMap;
       const globe = Globe()(document.getElementById('globe'))
         .globeImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/earth-night.jpg')
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
@@ -104,6 +109,33 @@
       }
       refreshApiStatus();
       setInterval(refreshApiStatus, 30000);
+
+      async function openSatelliteMap() {
+        const status = document.getElementById('api-status');
+        try {
+          const configResponse = await fetch('/api/public-config');
+          const config = await configResponse.json();
+          if (!config.google_maps_api_key) throw new Error('adicione GOOGLE_MAPS_API_KEY no .env');
+          if (!window.google?.maps) {
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(config.google_maps_api_key)}`;
+              script.onload = resolve;
+              script.onerror = () => reject(new Error('Google Maps indisponível'));
+              document.head.appendChild(script);
+            });
+          }
+          googleMap ??= new google.maps.Map(document.getElementById('map'), {
+            center: { lat: -23.5505, lng: -46.6333 }, zoom: 11, mapTypeId: 'satellite',
+          });
+          new google.maps.TrafficLayer().setMap(googleMap);
+          document.body.classList.add('map-mode');
+          status.textContent = '● GOOGLE MAPS · satélite + trânsito';
+        } catch (error) {
+          status.textContent = `● MAPA 2D INDISPONÍVEL · ${error.message}`;
+        }
+      }
+      document.getElementById('map-view').addEventListener('click', openSatelliteMap);
     </script>
   </body>
 </html>
