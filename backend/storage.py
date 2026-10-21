@@ -43,6 +43,15 @@ class GeofenceStore:
                     (fence.name, fence.latitude, fence.longitude, fence.radius_meters),
                 )
 
+    def delete(self, name: str) -> bool:
+        with closing(self._connect()) as connection:
+            with connection:
+                cursor = connection.execute(
+                    "DELETE FROM geofences WHERE name = ?",
+                    (name,),
+                )
+                return cursor.rowcount > 0
+
     def list(self) -> list[Geofence]:
         with closing(self._connect()) as connection:
             with connection:

@@ -14,6 +14,15 @@ class GeofenceStoreTests(unittest.TestCase):
             saved = GeofenceStore(path).list()
         self.assertEqual(saved, [Geofence("base", -23.55, -46.63, 250)])
 
+    def test_delete_geofence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sentinel.sqlite3"
+            store = GeofenceStore(path)
+            store.save(Geofence("base", -23.55, -46.63, 250))
+            self.assertTrue(store.delete("base"))
+            self.assertFalse(store.delete("base"))
+            self.assertEqual(store.list(), [])
+
     def test_position_history_is_limited_and_persisted(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "sentinel.sqlite3"

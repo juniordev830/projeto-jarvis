@@ -9,7 +9,7 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -134,6 +134,15 @@ def create_geofence(payload: GeofenceInput) -> dict[str, object]:
 @app.get("/api/geofences")
 def list_geofences() -> list[dict[str, object]]:
     return [asdict(fence) for fence, _ in geofences.values()]
+
+
+@app.delete("/api/geofences/{name}")
+def delete_geofence(name: str) -> dict[str, object]:
+    deleted_from_store = store.delete(name)
+    deleted_from_memory = geofences.pop(name, None) is not None
+    if not (deleted_from_store or deleted_from_memory):
+        raise HTTPException(status_code=404, detail="Geofence não encontrada")
+    return {"status": "deleted", "name": name}
 
 
 @app.get("/api/positions/history")
