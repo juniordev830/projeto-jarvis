@@ -9,6 +9,7 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - `web/index.html`: painel 3D inicial inspirado no “God’s Eye View”, com camadas simuladas de aviões, navios, satélites e trânsito, filtros e rotas.
 - `.env.example`: credenciais e endpoints das fontes externas.
 - `python/settings.py`: leitura segura das configurações pelo ambiente.
+- O arquivo `.env` local é carregado automaticamente ao iniciar Python; variáveis do sistema têm prioridade.
 - `backend/app.py`: API FastAPI com health check, fontes, geofences e WebSocket de posições.
 - `tests/test_gps.py`: testes do núcleo de distância e transição de geofence.
 - `Dockerfile` e `docker-compose.yml`: execução local reproduzível da API.
