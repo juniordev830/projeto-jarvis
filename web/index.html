@@ -47,7 +47,7 @@
       <div id="inspector" class="panel inspector" hidden></div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="texture-toggle">Luz do dia</button><button id="map-view">Mapa satélite</button>
+          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button><button id="replay-history">Reproduzir histórico</button><button id="texture-toggle">Luz do dia</button><button id="map-view">Mapa satélite</button>
         </div>
         <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span><span class="earthquake">Terremotos</span></div>
       </div>
@@ -83,6 +83,7 @@
         day: 'https://unpkg.com/three-globe@2.43.0/example/img/earth-blue-marble.jpg',
       };
       let currentTexture = 'night';
+      let replayTimer;
       function replaceAssets(type, incoming) {
         for (let index = assets.length - 1; index >= 0; index -= 1) {
           if (assets[index].type === type) assets.splice(index, 1);
@@ -152,6 +153,31 @@
         globe.globeImageUrl(textures[currentTexture]);
         event.currentTarget.textContent = currentTexture === 'night' ? 'Luz do dia' : 'Luz noturna';
       });
+
+      async function replayHistory() {
+        const status = document.getElementById('api-status');
+        clearInterval(replayTimer);
+        try {
+          const response = await fetch('/api/positions/history?limit=250');
+          const history = await response.json();
+          if (!Array.isArray(history) || !history.length) throw new Error('nenhuma posição registrada');
+          const points = [...history].reverse();
+          let index = 0;
+          const showNext = () => {
+            const point = points[index];
+            replaceAssets('history', [{ ...point, id: 'history-replay', type: 'history', lat: point.latitude, lng: point.longitude, color: '#86efac', altitude: 0.03, label: `Histórico GPS · ${new Date(point.timestamp * 1000).toLocaleString()}` }]);
+            globe.pointOfView({ lat: point.latitude, lng: point.longitude, altitude: 1.5 }, 450);
+            index += 1;
+            if (index >= points.length) clearInterval(replayTimer);
+          };
+          showNext();
+          replayTimer = setInterval(showNext, 900);
+          status.textContent = `● REPRODUZINDO HISTÓRICO · ${points.length} posições`;
+        } catch (error) {
+          status.textContent = `● HISTÓRICO INDISPONÍVEL · ${error.message}`;
+        }
+      }
+      document.getElementById('replay-history').addEventListener('click', replayHistory);
 
       document.getElementById('asset-search').addEventListener('input', event => {
         const query = event.target.value.trim().toLowerCase();
