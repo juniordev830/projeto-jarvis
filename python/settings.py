@@ -4,6 +4,14 @@ from dataclasses import dataclass
 import os
 
 
+def _optional_env(name: str) -> str | None:
+    """Retorna apenas credenciais reais, ignorando valores vazios ou de exemplo."""
+    value = os.getenv(name, "").strip()
+    if not value or value.lower() in {"configured-later", "change-me", "your-key-here"}:
+        return None
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     google_maps_api_key: str | None
@@ -19,12 +27,12 @@ class Settings:
     @classmethod
     def from_environment(cls) -> "Settings":
         return cls(
-            google_maps_api_key=os.getenv("GOOGLE_MAPS_API_KEY"),
-            copernicus_client_id=os.getenv("COPERNICUS_CLIENT_ID"),
-            copernicus_client_secret=os.getenv("COPERNICUS_CLIENT_SECRET"),
-            aisstream_api_key=os.getenv("AISSTREAM_API_KEY"),
-            opensky_client_id=os.getenv("OPENSKY_CLIENT_ID"),
-            opensky_client_secret=os.getenv("OPENSKY_CLIENT_SECRET"),
+            google_maps_api_key=_optional_env("GOOGLE_MAPS_API_KEY"),
+            copernicus_client_id=_optional_env("COPERNICUS_CLIENT_ID"),
+            copernicus_client_secret=_optional_env("COPERNICUS_CLIENT_SECRET"),
+            aisstream_api_key=_optional_env("AISSTREAM_API_KEY"),
+            opensky_client_id=_optional_env("OPENSKY_CLIENT_ID"),
+            opensky_client_secret=_optional_env("OPENSKY_CLIENT_SECRET"),
             nasa_gibs_base_url=os.getenv("NASA_GIBS_BASE_URL", "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best"),
             usgs_earthquake_feed=os.getenv("USGS_EARTHQUAKE_FEED", "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"),
             celestrak_gp_url=os.getenv("CELESTRAK_GP_URL", "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json"),

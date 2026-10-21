@@ -35,5 +35,5 @@ O programa informa quando o dispositivo entra ou sai da área configurada. A pos
 
 Abra `web/index.html` em um navegador com acesso à internet. A primeira versão usa dados simulados e bibliotecas carregadas por CDN; os próximos adaptadores poderão conectar fontes públicas de voos, navios e satélites.
 
-Para ativar conectores que exigem credenciais, copie `.env.example` para `.env` e preencha os valores localmente. Nunca publique o `.env`.
+As fontes públicas NASA GIBS, USGS Earthquakes e CelesTrak já ficam configuradas por padrão no `.env` local. Para ativar Google Maps, Copernicus Sentinel, AISStream ou OpenSky, copie `.env.example` para `.env` e preencha as credenciais reais localmente. Valores vazios ou de exemplo não ativam conectores. Nunca publique o `.env`.
 Projeto de automação Jarvis
