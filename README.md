@@ -20,6 +20,7 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - `backend/storage.py`: persistência SQLite local das geofences.
 - `Dockerfile` e `docker-compose.yml`: execução local reproduzível da API.
 - `.github/workflows/ci.yml`: validação automática de sintaxe e testes no GitHub Actions.
+- O CI instala as dependências do backend antes de executar as verificações, incluindo o propagador SGP4.
 - O projeto começa sem hardware: o modo simulado permite validar regras antes de conectar um dispositivo GPS real.
 
 ## Executar o simulador
