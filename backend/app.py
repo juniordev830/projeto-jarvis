@@ -21,6 +21,7 @@ from python.gps_core import AutomationEngine, Geofence, Position, distance_meter
 from python.settings import Settings  # noqa: E402
 from backend.storage import GeofenceStore  # noqa: E402
 from backend.source_clients import SourceUnavailable, fetch_celestrak, fetch_opensky  # noqa: E402
+from backend.alerts import send_webhook  # noqa: E402
 
 
 class GeofenceInput(BaseModel):
@@ -119,6 +120,15 @@ async def positions(websocket: WebSocket) -> None:
                     "event": engine.process(position),
                     "distance_meters": round(distance_meters(position, fence), 1),
                 })
+                if event:
+                    send_webhook(settings.alert_webhook_url, {
+                        "type": "geofence",
+                        "name": fence.name,
+                        "event": event,
+                        "latitude": position.latitude,
+                        "longitude": position.longitude,
+                        "timestamp": position.timestamp,
+                    })
             await websocket.send_text(json.dumps({"position": asdict(position), "events": events}))
     except WebSocketDisconnect:
         return
