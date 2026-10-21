@@ -6,7 +6,7 @@ Base de automação GPS com foco em geofencing, leitura de coordenadas e integra
 
 - `python/jarvis_gps.py`: núcleo em Python, com cálculo de distância, geofencing e modo simulado.
 - `typescript/gps_client.ts`: cliente tipado para enviar posições a uma API futura.
-- `web/index.html`: painel 3D inicial inspirado no “God’s Eye View”, com camadas simuladas e filtros.
+- `web/index.html`: painel 3D inicial inspirado no “God’s Eye View”, com camadas simuladas de aviões, navios, satélites e trânsito, filtros e rotas.
 - O projeto começa sem hardware: o modo simulado permite validar regras antes de conectar um dispositivo GPS real.
 
 ## Executar o simulador
