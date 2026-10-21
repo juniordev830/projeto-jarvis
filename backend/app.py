@@ -50,7 +50,7 @@ for saved_fence in store.list():
 
 @app.middleware("http")
 async def optional_token_auth(request: Request, call_next):
-    if settings.api_token and request.url.path not in {"/api/health", "/api/public-config"}:
+    if settings.api_token and request.url.path.startswith("/api/") and request.url.path not in {"/api/health", "/api/public-config"}:
         if request.headers.get("authorization") != f"Bearer {settings.api_token}":
             return JSONResponse(status_code=401, content={"detail": "Token de API inválido"})
     return await call_next(request)
@@ -154,9 +154,10 @@ async def positions(websocket: WebSocket) -> None:
             store.save_position(position)
             events = []
             for fence, engine in geofences.values():
+                event = engine.process(position)
                 events.append({
                     "geofence": fence.name,
-                    "event": engine.process(position),
+                    "event": event,
                     "distance_meters": round(distance_meters(position, fence), 1),
                 })
                 if event:
