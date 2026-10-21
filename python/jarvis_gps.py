@@ -1,4 +1,4 @@
-"""Núcleo de automação GPS do Projeto Jarvis.
+"""Núcleo de automação GPS do Jarvis Sentinel.
 
 Funciona em modo simulado para desenvolvimento e pode receber posições reais
 por uma integração posterior com um módulo GPS ou API de localização.
