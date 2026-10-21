@@ -12,6 +12,7 @@ Plataforma de automação GPS com foco em geofencing, leitura de coordenadas e i
 - `backend/app.py`: API FastAPI com health check, fontes, geofences e WebSocket de posições.
 - `tests/test_gps.py`: testes do núcleo de distância e transição de geofence.
 - `Dockerfile` e `docker-compose.yml`: execução local reproduzível da API.
+- `.github/workflows/ci.yml`: validação automática de sintaxe e testes no GitHub Actions.
 - O projeto começa sem hardware: o modo simulado permite validar regras antes de conectar um dispositivo GPS real.
 
 ## Executar o simulador
@@ -36,7 +37,7 @@ O programa informa quando o dispositivo entra ou sai da área configurada. A pos
 
 ## Abrir o painel 3D
 
-Abra `web/index.html` em um navegador com acesso à internet. A primeira versão usa dados simulados e bibliotecas carregadas por CDN; os próximos adaptadores poderão conectar fontes públicas de voos, navios e satélites.
+Abra `web/index.html` em um navegador com acesso à internet. A primeira versão usa dados simulados e bibliotecas carregadas por CDN; a camada de terremotos consulta o feed público da USGS quando houver conexão.
 
 As fontes públicas NASA GIBS, USGS Earthquakes e CelesTrak já ficam configuradas por padrão no `.env` local. Para ativar Google Maps, Copernicus Sentinel, AISStream ou OpenSky, copie `.env.example` para `.env` e preencha as credenciais reais localmente. Valores vazios ou de exemplo não ativam conectores. Nunca publique o `.env`.
 

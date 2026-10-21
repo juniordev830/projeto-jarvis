@@ -24,7 +24,7 @@
       button:hover,button.active { border-color:var(--cyan); color:var(--cyan); background:#123047; }
       .legend { display:flex; gap:14px; color:var(--muted); font-size:12px; }
       .legend span::before { content:""; display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; background:var(--cyan); }
-      .legend .ship::before { background:var(--orange); }.legend .sat::before { background:#c4b5fd; }.legend .traffic::before { background:#f87171; }
+      .legend .ship::before { background:var(--orange); }.legend .sat::before { background:#c4b5fd; }.legend .traffic::before { background:#f87171; }.legend .earthquake::before { background:#f472b6; }
       @media (max-width:600px) { .hud { padding:12px; }.topbar,.bottombar { align-items:flex-start; flex-direction:column; }.bottombar { align-items:stretch; }.legend { justify-content:center; } }
     </style>
   </head>
@@ -37,9 +37,9 @@
       </div>
       <div class="bottombar">
         <div class="panel filters" aria-label="Filtros de camadas">
-          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button>
+          <button class="active" data-layer="all">Tudo</button><button data-layer="aircraft">Aviões</button><button data-layer="ship">Navios</button><button data-layer="satellite">Satélites</button><button data-layer="traffic">Trânsito</button><button data-layer="earthquake">Terremotos</button>
         </div>
-        <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span></div>
+        <div class="panel legend"><span>Aviões</span><span class="ship">Navios</span><span class="sat">Satélites</span><span class="traffic">Trânsito</span><span class="earthquake">Terremotos</span></div>
       </div>
     </div>
     <script>
@@ -56,6 +56,7 @@
         { startLat:-23.55, startLng:-46.63, endLat:-23.59, endLng:-46.7, color:'#f87171', label:'Rota com congestionamento' },
         { startLat:-23.55, startLng:-46.63, endLat:-23.48, endLng:-46.62, color:'#86efac', label:'Rota alternativa' },
       ];
+      const earthquakeSource = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson';
       const globe = Globe()(document.getElementById('globe'))
         .globeImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/earth-night.jpg')
         .backgroundImageUrl('https://unpkg.com/three-globe@2.43.0/example/img/night-sky.png')
@@ -71,6 +72,24 @@
         const layer = button.dataset.layer;
         globe.pointsData(layer === 'all' ? assets : assets.filter(asset => asset.type === layer));
       }));
+
+      async function loadEarthquakes() {
+        try {
+          const response = await fetch(earthquakeSource);
+          if (!response.ok) throw new Error('USGS indisponível');
+          const feed = await response.json();
+          const earthquakes = feed.features.map(feature => {
+            const [lng, lat, depth] = feature.geometry.coordinates;
+            const magnitude = feature.properties.mag ?? 0;
+            return { id: `quake-${feature.id}`, type: 'earthquake', lat, lng, color: '#f472b6', altitude: Math.min(Math.max(depth / 10000, 0.01), 0.08), label: `M${magnitude.toFixed(1)} · ${feature.properties.place || 'evento USGS'}` };
+          });
+          assets.push(...earthquakes);
+          globe.pointsData(assets);
+        } catch (error) {
+          console.info('Camada USGS indisponível:', error.message);
+        }
+      }
+      loadEarthquakes();
 
       async function refreshApiStatus() {
         const status = document.getElementById('api-status');
