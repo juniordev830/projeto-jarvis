@@ -1,4 +1,4 @@
-"""Configuração dos conectores externos do Projeto Sentinel."""
+"""Configuração dos conectores externos do Projeto Sentinel Atlas."""
 
 from dataclasses import dataclass
 import os
@@ -45,3 +45,5 @@ class Settings:
         if self.aisstream_api_key: sources.append("AISStream vessels")
         if self.opensky_client_id and self.opensky_client_secret: sources.append("OpenSky aircraft")
         return sources
+
+

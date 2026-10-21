@@ -1,4 +1,4 @@
-"""API HTTP/WebSocket do Projeto Sentinel."""
+"""API HTTP/WebSocket do Projeto Sentinel Atlas."""
 
 from __future__ import annotations
 
@@ -33,14 +33,14 @@ class PositionInput(BaseModel):
     timestamp: float | None = None
 
 
-app = FastAPI(title="Sentinel GPS API", version="0.1.0")
+app = FastAPI(title="Sentinel Atlas GPS API", version="0.1.0")
 settings = Settings.from_environment()
 geofences: dict[str, tuple[Geofence, AutomationEngine]] = {}
 
 
 @app.get("/api/health")
 def health() -> dict[str, object]:
-    return {"status": "ok", "service": "sentinel-api", "timestamp": time.time()}
+    return {"status": "ok", "service": "Sentinel Atlas API", "timestamp": time.time()}
 
 
 @app.get("/api/sources")
@@ -81,3 +81,5 @@ async def positions(websocket: WebSocket) -> None:
 
 # Mantido por último para não interceptar as rotas da API e do WebSocket.
 app.mount("/", StaticFiles(directory=ROOT / "web", html=True), name="web")
+
+
